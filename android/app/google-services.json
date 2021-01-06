@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "462781018477",
+    "project_id": "crowe-app-solution",
+    "storage_bucket": "crowe-app-solution.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:462781018477:android:25d5a1f4ac59cfde0dea64",
+        "android_client_info": {
+          "package_name": "com.croweappsolution"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "462781018477-1hpl6aujsdnimgj40gmdu3n27k87bsj0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDEGUKqrjICqC5itP5y_KX7CTmqmGFsKpw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "462781018477-1hpl6aujsdnimgj40gmdu3n27k87bsj0.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

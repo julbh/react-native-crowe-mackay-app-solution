@@ -1,0 +1,2 @@
+export const SET_APP_STATUS = 'SET_APP_STATUS';
+export const SET_APP_LOADING = 'SET_APP_LOADING';

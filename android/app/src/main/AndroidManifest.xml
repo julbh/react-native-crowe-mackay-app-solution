@@ -1,0 +1,49 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="com.croweappsolution">
+
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_stat_app_icon" />
+    <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/notification_icon" />
+    <application
+            android:requestLegacyExternalStorage="true"
+            android:name=".MainApplication"
+            android:label="@string/app_name"
+            android:icon="@mipmap/ic_launcher"
+            android:roundIcon="@mipmap/ic_launcher_round"
+            android:allowBackup="false"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/AppTheme">
+        <activity
+                android:name=".MainActivity"
+                android:label="@string/app_name"
+                android:configChanges="keyboard|keyboardHidden|orientation|screenSize|uiMode"
+                android:launchMode="singleTask"
+                android:screenOrientation="fullSensor"
+                android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+            <intent-filter android:label="filter_react_native">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="croweappsolution" android:host="feed"/>
+                <data android:scheme="croweappsolution" android:host="agenda"/>
+                <data android:scheme="croweappsolution" android:host="chat"/>
+                <data android:scheme="croweappsolution" android:host="webview"/>
+                <data android:scheme="croweappsolution" android:host="comment"/>
+            </intent-filter>
+        </activity>
+        <!--<service android:name=".NotificationsMessagingService">
+            <intent-filter android:priority="1">
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>-->
+        <activity android:name="com.facebook.react.devsupport.DevSettingsActivity"/>
+    </application>
+
+</manifest>

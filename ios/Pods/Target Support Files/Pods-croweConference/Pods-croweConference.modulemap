@@ -1,0 +1,6 @@
+module Pods_croweConference {
+  umbrella header "Pods-croweConference-umbrella.h"
+
+  export *
+  module * { export * }
+}
