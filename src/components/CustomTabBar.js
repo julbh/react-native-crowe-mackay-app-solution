@@ -89,6 +89,7 @@ export function CustomTabBar(props) {
 
                 return (
                     <TouchableOpacity
+                        key={index}
                         accessibilityRole="button"
                         accessibilityState={isFocused ? {selected: true} : {}}
                         accessibilityLabel={options.tabBarAccessibilityLabel}
@@ -111,8 +112,8 @@ export function CustomTabBar(props) {
                             shadowRadius: 11.14,
                             elevation: 17,
 
-                            // backgroundColor: '#fff',
-                            backgroundColor: isFocused ? '#CCCCCC' : '#fff',
+                            backgroundColor: '#fff',
+                            // backgroundColor: isFocused ? '#CCCCCC' : '#fff',
                             ...props.style,
                         }}
                     >

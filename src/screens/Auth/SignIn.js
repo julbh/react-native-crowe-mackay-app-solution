@@ -18,8 +18,13 @@ import logo from '../../assets/images/splash.png';
 // import {globalStyle} from '../../assets/style';
 import {useAppSettingsState} from "../../context/AppSettingsContext";
 import LoadingOverlay from "../../components/LoadingOverlay";
+import {
+    ENV_APP_PREFIX,
+    ENV_MULTI_TENANCY,
+} from '@env';
 
 const SigninScreen = ({navigation}) => {
+    const flag = ENV_MULTI_TENANCY === "1";
     const {config} = useAppSettingsState();
     const {signIn} = useContext(AuthContext);
     const style = useStyles(config.style);
@@ -119,7 +124,7 @@ const SigninScreen = ({navigation}) => {
 
     return (
         <View style={style.container}>
-            <View style={style.backContainer}>
+            {flag && <View style={style.backContainer}>
                 <Button
                     type="clear"
                     icon={
@@ -129,13 +134,13 @@ const SigninScreen = ({navigation}) => {
                     onPress={() => navigation.goBack()}
                 />
                 <Text style={{fontWeight: 'bold', fontSize: 16,}}>Back</Text>
-            </View>
+            </View>}
             <Animated.View
                 style={[style.header, {transform: [{translateY: keyboardHeight}]}]}
                 behavior="padding"
             >
                 <Animated.Image
-                    source={config?.loading_logo ? {uri: config.loading_logo} : logo}
+                    source={flag ? (config?.loading_logo ? {uri: config.loading_logo} : logo) : logo}
                     // source={logo}
                     style={{width: 160, height: 150, transform: [{scale: imageTransform}]}}/>
                 <Animated.View style={{...style.inputContainer, transform: [{translateY: contentTransform}]}}>

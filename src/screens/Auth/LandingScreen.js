@@ -8,17 +8,20 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {getAppSettings, useAppSettingsDispatch, useAppSettingsState} from "../../context/AppSettingsContext";
 import {
     ENV_APP_PREFIX,
+    ENV_MULTI_TENANCY,
 } from '@env';
+import {globalStyle} from "../../assets/style";
 
 export function LandingScreen(props) {
 
     const appSettingDispatch = useAppSettingsDispatch();
     const {config} = useAppSettingsState();
-    const styles = useStyles(config.style);
-    const globalStyle = {...config.style};
+    // const styles = useStyles(config.style);
+    // const globalStyle = {...config.style};
 
     const [hasCode, setHasCode] = useState(false);
-    const [appCode, setAppCode] = useState(ENV_APP_PREFIX);
+    // const [appCode, setAppCode] = useState(ENV_APP_PREFIX);
+    const [appCode, setAppCode] = useState('');
     const [loading, setLoading] = useState(false);
 
     const buttonHandler = () => {
@@ -36,8 +39,26 @@ export function LandingScreen(props) {
 
     return (
         <MainContainer style={styles.container}>
+
+            <Image
+                source={
+                    __DEV__
+                        ? require('../../assets/images/splash.png')
+                        : require('../../assets/images/splash.png')
+                }
+                style={styles.welcomeImage}
+            />
+
             <Text style={styles.title}>Crowe MacKay App Solution</Text>
             <View style={styles.formContainer}>
+                <CheckBox
+                    center
+                    title='Do you have an app code?'
+                    checked={hasCode}
+                    checkedColor={globalStyle?.primary_color_2}
+                    containerStyle={styles.checkbox}
+                    onPress={() => setHasCode(!hasCode)}
+                />
                 {hasCode && <TextInput
                     mode={'outlined'}
                     placeholder={"Code"}
@@ -53,24 +74,8 @@ export function LandingScreen(props) {
                     onPress={buttonHandler}
                     loading={loading}
                 />
-                <CheckBox
-                    center
-                    title='Do you have an app code?'
-                    checked={hasCode}
-                    checkedColor={globalStyle?.primary_color_2}
-                    containerStyle={styles.checkbox}
-                    onPress={() => setHasCode(!hasCode)}
-                />
-            </View>
 
-            <Image
-                source={
-                    __DEV__
-                        ? require('../../assets/images/splash.png')
-                        : require('../../assets/images/splash.png')
-                }
-                style={styles.welcomeImage}
-            />
+            </View>
 
             {loading && <View style={styles.loadingContainer}>
                 <Spinner
@@ -86,63 +91,65 @@ export function LandingScreen(props) {
     )
 }
 
+const styles = StyleSheet.create({
+    container: {
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    title: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: globalStyle.primary_color_2,
+    },
+    welcomeImage: {
+        width: 100,
+        height: 80,
+        resizeMode: 'contain',
+        marginTop: 3,
+        marginLeft: -10,
+    },
+    textInput: {
+        backgroundColor: '#fff',
+        borderWidth: 1,
+        borderColor: globalStyle.gray_tone_3,
+        borderRadius: 5,
+        paddingHorizontal: 10,
+        width: '100%',
+    },
+    checkbox: {
+        width: '100%',
+        backgroundColor: '#fff',
+        borderColor: 'transparent',
+        flexDirection: "row",
+        justifyContent: 'flex-start'
+    },
+    formContainer: {
+        marginTop: 30,
+        width: 300,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    button: {
+        marginTop: 10,
+        width: '100%',
+    },
+    loadingContainer: {
+        paddingTop: 30,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    loadingText: {
+        color: globalStyle.primary_color_2,
+    },
+    spinner: {
+        marginRight: 10,
+    }
+})
+/*
 const useStyles = (globalStyle) => {
-    return StyleSheet.create({
-        container: {
-            justifyContent: 'center',
-            alignItems: 'center',
-        },
-        title: {
-            fontSize: 20,
-            fontWeight: 'bold',
-            color: globalStyle.primary_color_2,
-        },
-        welcomeImage: {
-            width: 100,
-            height: 80,
-            resizeMode: 'contain',
-            marginTop: 3,
-            marginLeft: -10,
-        },
-        textInput: {
-            backgroundColor: '#fff',
-            borderWidth: 1,
-            borderColor: globalStyle.gray_tone_3,
-            borderRadius: 5,
-            paddingHorizontal: 10,
-            width: '100%',
-        },
-        checkbox: {
-            width: '100%',
-            backgroundColor: '#fff',
-            borderColor: 'transparent',
-            flexDirection: "row",
-            justifyContent: 'flex-start'
-        },
-        formContainer: {
-            marginTop: 30,
-            width: 300,
-            justifyContent: 'center',
-            alignItems: 'center',
-        },
-        button: {
-            marginTop: 10,
-            width: '100%',
-        },
-        loadingContainer: {
-            paddingTop: 30,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center'
-        },
-        loadingText: {
-            color: globalStyle.primary_color_2,
-        },
-        spinner: {
-            marginRight: 10,
-        }
-    })
-};
+    return
+};*/
 
 /*
 const styles = StyleSheet.create({

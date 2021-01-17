@@ -222,7 +222,11 @@ const HomeNavigator = (props) => {
                 options={{
                     tabBarLabel: 'Feed',
                     tabBarIcon: ({color, size, focused}) => (
-                        <Icon type={'font-awesome'} name="newspaper-o" color={color} size={focused ? 33 : 25}/>
+                        <Icon type={'font-awesome'}
+                              name="newspaper-o"
+                              color={color}
+                              style={{opacity: focused ? 1 : 0.5}}
+                              size={focused ? 33 : 25}/>
                     ),
                     tabBarColor: globalStyle.gray_tone_3,
                 }}
@@ -244,6 +248,7 @@ const HomeNavigator = (props) => {
                                 tabBarLabel: tab.data.title,
                                 tabBarIcon: ({color, size, focused}) => (
                                     <Avatar
+                                        containerStyle={{opacity: focused ? 1 : 0.2}}
                                         source={{uri: tab.data.icon}}
                                         imageProps={{resizeMode: 'contain'}}
                                         size={focused ? 33 : 25}
@@ -255,14 +260,18 @@ const HomeNavigator = (props) => {
                     )
                 })
             }
-            {app_settings?.microapps && <Tab.Screen
+            {app_settings?.microapp && <Tab.Screen
                 name="MicroAppNav"
                 component={MicroAppNav}
                 options={{
                     title: 'Micro Apps',
                     tabBarLabel: 'Micro Apps',
                     tabBarIcon: ({color, size, focused}) => (
-                        <Icon type={'MaterialCommunity'} name="apps" color={color} size={focused ? 33 : 25}/>
+                        <Icon type={'MaterialCommunity'}
+                              style={{opacity: focused ? 1 : 0.5}}
+                              name="apps"
+                              color={color}
+                              size={focused ? 33 : 25}/>
                     ),
                     tabBarColor: globalStyle.gray_tone_3,
                 }}
@@ -275,7 +284,9 @@ const HomeNavigator = (props) => {
                     tabBarLabel: 'Inbox',
                     tabBarIcon: ({color, size, focused}) => (
                         <>
-                            <Icon type={'material-community'} name="email-outline" color={color}
+                            <Icon type={'material-community'}
+                                  style={{opacity: focused ? 1 : 0.5}}
+                                  name="email-outline" color={color}
                                   size={focused ? 33 : 25}/>
                             {props.inboxData.data.length > 0 && props.inboxData.data.filter(inbox => inbox.data.status === 'UNREAD').length > 0 &&
                             <Badge
@@ -297,7 +308,12 @@ const HomeNavigator = (props) => {
                     tabBarIcon: ({color, size, focused}) => {
                         // console.log('tabBarIcon ======> ', color, size, focused)
                         return (
-                            <Icon type={'font-awesome'} name="user-circle" color={color} size={focused ? 33 : 25}/>
+                            <Icon
+                                style={{opacity: focused ? 1 : 0.5}}
+                                type={'font-awesome'}
+                                name="user-circle"
+                                color={color}
+                                size={focused ? 33 : 25}/>
                         )
                     },
                     tabBarColor: globalStyle.gray_tone_3,

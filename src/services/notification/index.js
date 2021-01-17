@@ -4,7 +4,6 @@ import {BEAMS_INSTANCE_ID} from '../../config';
 import Toast from 'react-native-simple-toast';
 import MToast from 'react-native-toast-message';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-// import {useDispatch} from 'react-redux';
 import * as Actions from '../../redux/actions';
 import {Platform} from "react-native";
 
@@ -24,7 +23,8 @@ export const init = (user_id, dispatchAction) => {
         console.log(app_prefix)
         subscribe(donutsInterest);
         // subscribe('debug-'+user_id);
-        if (app_prefix === '') {
+        // if (app_prefix === '') {
+        if (!Boolean(app_prefix)) {
             subscribe(`debug-${user_id}`);
         } else {
             subscribe(`debug-${app_prefix}-${user_id}`);

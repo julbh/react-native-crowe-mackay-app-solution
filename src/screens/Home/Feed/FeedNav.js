@@ -75,7 +75,7 @@ const MyTransition = {
 
 const Stack = createStackNavigator();
 
-function FeedNav() {
+function FeedNav(props) {
     const appSettingsState = useAppSettingsState();
     const {app_settings} = appSettingsState.config;
 
@@ -99,7 +99,7 @@ function FeedNav() {
                                 <FeedListHeader
                                     title={title}
                                     onClick={() => {
-                                        this.props.navigation.navigate('ChatNav');
+                                        props.navigation.navigate('ChatNav');
                                     }
                                     }
                                 />

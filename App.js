@@ -47,7 +47,17 @@ import ChatNav from './src/screens/Home/Feed/ChatPage/ChatNav';
 import VideoDialog from './src/screens/Common/VideoDialog';
 import MToast from 'react-native-toast-message';
 import WebViewScreen from './src/screens/Common/WebViewScreen';
-import {AppSettingsProvider, getAppSettings, useAppSettingsDispatch} from "./src/context/AppSettingsContext";
+import {
+    AppSettingsProvider,
+    getAppSettings,
+    useAppSettingsDispatch,
+    useDefaultSettings,
+} from './src/context/AppSettingsContext';
+import {
+    ENV_APP_PREFIX,
+    ENV_MULTI_TENANCY,
+} from '@env';
+
 // import {getCategories} from './src/services/microApps/wcService';
 
 // Pusher.logToConsole = true;
@@ -92,6 +102,7 @@ export default App = () => {
 };
 
 const Main = () => {
+    const flag = ENV_MULTI_TENANCY === "1";
     const appSettingDispatch = useAppSettingsDispatch();
     const dispatch = useDispatch();
     const state = useSelector(({userData}) => userData);
@@ -105,10 +116,14 @@ const Main = () => {
         tokenVerify().then(async (res) => {
             try {
                 let app_prefix = await AsyncStorage.getItem('app_prefix');
-                let response = await getAppSettings(appSettingDispatch, app_prefix);
+                if (flag) {
+                    let response = await getAppSettings(appSettingDispatch, app_prefix);
+                }else {
+                    let response = await useDefaultSettings(appSettingDispatch);
+                }
                 global.app_prefix = app_prefix;
                 dispatch({type: 'REFRESH_TOKEN', access_token: res.token, id_token: res.id_token});
-            }catch (e) {
+            } catch (e) {
                 dispatch({type: 'REFRESH_TOKEN', access_token: null});
             }
         }).catch(err => {

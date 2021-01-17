@@ -1,20 +1,26 @@
 import React, {useContext, useReducer} from 'react';
 import {getAppSettingsService} from "../services/settings";
 import {globalStyle} from "../assets/style";
+import {
+    ENV_APP_PREFIX,
+    ENV_APP_NAME,
+} from '@env';
 
 const initialState = {
     config: {
         style: {...globalStyle},
         app_settings: {
-            feed: true,
-            chat: true,
-            inbox: true,
-            microapps: false,
-            tabs: [],
+            "microapp_tabs": [],
+            "feed": true,
+            "chat": true,
+            "inbox": true,
+            "microapp": true,
+            "allow_public_registration": false,
+            "auth_strategy": "SIMPLE"
         },
         loading_logo: "https://assets.tcog.hk/drshrtfarg.png",
-        prefix: "",
-        app_name: "Crowe MacKay App Solution",
+        prefix: ENV_APP_PREFIX || "",
+        app_name: ENV_APP_NAME,
     },
     loading: false,
     error: null,
@@ -48,6 +54,8 @@ function AppSettingsReducer(state = initialState, action) {
                 loading: false,
                 error: action.data,
             };
+        case "USE_DEFAULT_SETTINGS":
+            return initialState;
         default:
             return state;
     }
@@ -84,7 +92,7 @@ function getAppSettings(dispatch, code) {
     return new Promise((resolve, reject) => {
         dispatch({type: "GET_SETTINGS_REQUEST"});
         getAppSettingsService(code).then(res => {
-            // console.log('app settings ==> ', res.data[0]?.data)
+            console.log('app settings ==> ', res?.data)
             if (res) {
                 dispatch({type: "GET_SETTINGS_SUCCESS", data: res?.data});
             }
@@ -96,10 +104,15 @@ function getAppSettings(dispatch, code) {
     })
 }
 
+function useDefaultSettings(dispatch) {
+    dispatch({type: "USE_DEFAULT_SETTINGS"});
+}
+
 export {
     AppSettingsStateContext,
     AppSettingsProvider,
     useAppSettingsDispatch,
     useAppSettingsState,
     getAppSettings,
+    useDefaultSettings,
 }

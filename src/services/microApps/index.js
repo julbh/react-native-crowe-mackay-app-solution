@@ -212,6 +212,7 @@ export const getMicroAppBulkService = (ids, app_prefix) => {
     // const app_prefix = global.app_prefix;
     let query = ids.join(',');
     return new Promise((resolve, reject) => {
+        if(ids.length === 0) resolve([]);
         apiEnd(`dev/db/${app_prefix}microapps?_id=${query}`, {
             method: 'get',
             headers: {
