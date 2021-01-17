@@ -23,6 +23,7 @@ const Stack = createStackNavigator();
 
 export default function ChatNav(props) {
     const {config} = useAppSettingsState();
+    const auth_strategy = config.app_settings?.auth_strategy === 'NONE';
 
     let {navigation} = props;
 
@@ -35,7 +36,8 @@ export default function ChatNav(props) {
     const [user, setUser] = useState({});
 
     useEffect(() => {
-        let user = (jwtDecode(userData.id_token));
+        let user = auth_strategy ? {} : (jwtDecode(userData.id_token));
+        // let user = (jwtDecode(userData.id_token));
         setUser(user);
     }, []);
 
@@ -51,12 +53,19 @@ export default function ChatNav(props) {
         selectedUsers.map(item => {
             channel += `@${item._id}`;
             ids.push(item._id);
-            let tmp = {
+            /*let tmp = {
                 _id: item._id,
                 full_name: item.data.full_name,
                 picture: item.data.picture,
                 email: item.data.email,
                 position: item.data.position,
+            };*/
+            let tmp = {
+                _id: item._id,
+                full_name: item.full_name,
+                picture: item.picture,
+                email: item.email,
+                position: item.bio,
             };
             users.push(tmp);
         });
@@ -65,11 +74,11 @@ export default function ChatNav(props) {
 
         ids.push(user.user_id);
         let tmp = {
-            _id: user.user_id,
-            full_name: user.full_name,
-            picture: user.picture,
-            email: user.email,
-            position: user.position,
+            _id: user?.user_id,
+            full_name: user?.full_name,
+            picture: user?.picture,
+            email: user?.email,
+            position: user?.position,
         };
         users.push(tmp);
 
@@ -78,7 +87,7 @@ export default function ChatNav(props) {
             channel: SUBSCRIBE_TO_CHANNEL,
             channel_payload: {
                 _user_ids: ids,
-                composedAt: moment(),
+                composedAt: moment().toISOString(),
                 type: SUBSCRIBE_TO_CHANNEL,
                 channel: channel,
                 users: users,
@@ -86,9 +95,11 @@ export default function ChatNav(props) {
                   name: user.full_name,
                   avatar: user.picture,
                 },
-                _id: ObjectID(),
+                // _id: ObjectID(),
+                _id: "5f9b630eac8bb2213f27d915",
             },
         };
+        console.log('new chat ===> ', data)
         dispatch(Actions.setChatUsersAction(users));
 
         dispatch(Actions.setSelectedUsersAction([]));

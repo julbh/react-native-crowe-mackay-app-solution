@@ -23,12 +23,13 @@ export const init = (user_id, dispatchAction) => {
         console.log(app_prefix)
         subscribe(donutsInterest);
         // subscribe('debug-'+user_id);
-        // if (app_prefix === '') {
-        if (!Boolean(app_prefix)) {
-            subscribe(`debug-${user_id}`);
-        } else {
-            subscribe(`debug-${app_prefix}-${user_id}`);
-        }
+        // if(ENV_AUTH_STRATEGY !== 'NONE'){
+            if (!Boolean(app_prefix)) {
+                subscribe(`debug-${user_id}`);
+            } else {
+                subscribe(`debug-${app_prefix}-${user_id}`);
+            }
+        // }
     });
 
     // Setup notification listeners

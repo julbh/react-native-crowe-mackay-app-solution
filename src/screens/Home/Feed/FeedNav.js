@@ -8,6 +8,8 @@ import {Button, Icon} from 'react-native-elements';
 import FeedListHeader from './components/FeedListHeader';
 import {AppSettingsStateContext, useAppSettingsState} from "../../../context/AppSettingsContext";
 import NavigationHeader from "../../../components/NavigationHeader";
+import WebViewScreen from '../../Common/WebViewScreen';
+import FeedComments from './DetailsPage/FeedComments';
 
 const config = {
     animation: 'timing',
@@ -78,10 +80,14 @@ const Stack = createStackNavigator();
 function FeedNav(props) {
     const appSettingsState = useAppSettingsState();
     const {app_settings} = appSettingsState.config;
+    const {config} = appSettingsState;
+    const globalStyle = {...config.style};
+
+    const auth_strategy = app_settings?.auth_strategy === 'NONE';
 
     return (
         <Stack.Navigator initialRouteName="FeedList" mode={'card'} headerMode={'screen'}>
-            {app_settings.chat ? <Stack.Screen
+            {!auth_strategy && app_settings.chat ? <Stack.Screen
                     name="FeedList"
                     component={FeedList}
                     options={{
@@ -162,10 +168,39 @@ function FeedNav(props) {
                 }}
             />
             <Stack.Screen
+                name="FeedWebview"
+                // children={() => <WebViewScreen title={"User Profile"}/>}
+                component={WebViewScreen}
+                options={{
+                    title: 'User Profile',
+                    headerShown: false,
+                }}
+            />
+            <Stack.Screen
                 name="UserProfile"
                 component={UserProfile}
                 options={{
                     title: 'User Profile',
+                    headerShown: false,
+                }}
+            />
+            <Stack.Screen
+                name="FeedComments"
+                component={FeedComments}
+                options={{
+                    title: 'Comments',
+                    // headerShown: false,
+                    headerStyle: {
+                        backgroundColor: '#F2F2F2',
+                        height: 50,
+                        borderBottomColor: globalStyle?.gray_tone_3,
+                    },
+                    headerTintColor: globalStyle?.primary_color_2,
+                    headerTitleStyle: {
+                        fontSize: 20,
+                        fontWeight: 'bold',
+                        color: globalStyle?.primary_color_2,
+                    },
                 }}
             />
         </Stack.Navigator>

@@ -43,7 +43,7 @@ class ProgramScreen extends Component {
             let {fetch_collection, start_date} = params.payload;
             let title = params.title;
 
-            let user = jwtDecode(this.props.userData.id_token);
+            // let user = jwtDecode(this.props.userData.id_token);
             // this.props.getProgram(user.permission);
             this.props.getProByUrl(fetch_collection);
 

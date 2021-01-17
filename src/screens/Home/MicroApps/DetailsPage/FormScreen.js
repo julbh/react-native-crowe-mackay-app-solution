@@ -39,6 +39,7 @@ function LoadingIndicatorView() {
 
 function FormScreen(props) {
     const {config} = useAppSettingsState();
+    const auth_strategy = config.app_settings?.auth_strategy === 'NONE';
     const styles = useStyles(config.style);
     const globalStyle = {...config.style};
 
@@ -90,7 +91,8 @@ function FormScreen(props) {
                 setDeeplink(params.payload.deeplink);
                 // fetch all users
                 let id_token = userData.id_token;
-                let curUser = (jwtDecode(id_token));
+                let curUser = auth_strategy ? {} : (jwtDecode(id_token));
+                // let curUser = (jwtDecode(id_token));
                 setCurrentUser(curUser);
                 setLoading(true);
                 getAllUsersService(curUser.user_id).then((users) => {
@@ -115,8 +117,8 @@ function FormScreen(props) {
 
     useEffect(() => {
         let params = props.route.params;
-        let id_token = userData.id_token;
-        let {user_id} = (jwtDecode(id_token));
+        // let id_token = userData.id_token;
+        // let {user_id} = (jwtDecode(id_token));
         console.log('payload===> ', params.payload, params);
         setTag(params.payload.tag);
         setSchema(params.payload.schema);
@@ -256,7 +258,8 @@ function FormScreen(props) {
             }
         });
         let id_token = userData.id_token;
-        let {user_id} = (jwtDecode(id_token));
+        // let {user_id} = (jwtDecode(id_token));
+        let {user_id} = auth_strategy ? {} : (jwtDecode(id_token));
         let submitData = {
             _tag: tag,
             user_id: user_id,

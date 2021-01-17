@@ -9,7 +9,7 @@ import {
 import {Avatar, Button, Icon, Accessory, ListItem, Card, SearchBar} from 'react-native-elements';
 import {useDispatch, useSelector} from 'react-redux';
 import * as Actions from '../../../redux/actions';
-import {createShortCode, DATA, uriToBlob} from '../../../services/common';
+import {createShortCode, DATA, toHumanTime, uriToBlob} from '../../../services/common';
 import noAvatar from '../../../assets/images/no_avatar.png';
 import LoadingScreen from './components/LoadingScreen';
 import {deleteInboxService, updateInboxService} from '../../../services/inbox';
@@ -19,6 +19,7 @@ import URI from 'urijs';
 import {SwipeListView} from 'react-native-swipe-list-view';
 import {getCommentByIdService} from '../../../services/microApps';
 import {useAppSettingsState} from "../../../context/AppSettingsContext";
+import jwtDecode from 'jwt-decode';
 
 const wait = (timeout) => {
     return new Promise(resolve => {
@@ -29,6 +30,7 @@ const wait = (timeout) => {
 const InboxScreen = (props) => {
     const {config} = useAppSettingsState();
     const styles = useStyles(config.style);
+    const auth_strategy = config.app_settings?.auth_strategy === 'NONE';
 
     let dispatch = useDispatch();
     let userData = useSelector((rootReducer) => rootReducer.userData);
@@ -38,7 +40,8 @@ const InboxScreen = (props) => {
     const onRefresh = React.useCallback(() => {
         setRefreshing(true);
         // props.getFeed();
-        dispatch(Actions.getInboxAction());
+        let {user_id} = auth_strategy ? "" : (jwtDecode(userData.id_token));
+        dispatch(Actions.getInboxAction(user_id));
         // props.getInbox();
         wait(2000).then(() => setRefreshing(false));
     }, []);
@@ -49,7 +52,7 @@ const InboxScreen = (props) => {
         for (let inbox of inboxData.data) {
             let tmp = {...inbox};
             if (inbox._id === _id) {
-                tmp.data.status = status;
+                tmp.status = status;
             }
             updatedInbox.push(tmp);
         }
@@ -59,7 +62,7 @@ const InboxScreen = (props) => {
             console.log('error ===> ', err);
         });
 
-        let deeplink = item?.data?.deeplink;
+        let deeplink = item?.deeplink;
         console.log('deeplink url ===> ', deeplink, Boolean(deeplink));
         if (Boolean(deeplink)) {
 
@@ -190,18 +193,18 @@ const InboxScreen = (props) => {
             <TouchableOpacity onPress={() => changeStatus('READ', item)}>
                 <ListItem
                     // bottomDivider
-                    containerStyle={item.data.status === 'READ' ? styles.expiredCardContainer : styles.cardItemContainer}
+                    containerStyle={item.status === 'READ' ? styles.expiredCardContainer : styles.cardItemContainer}
                 >
                     <Avatar rounded
-                            source={item.authorInfo.data.picture === undefined || '' ? noAvatar : {uri: item.authorInfo.data.picture}}
+                            source={!Boolean(item.authorInfo?.data?.picture) ? noAvatar : {uri: item.authorInfo?.data?.picture}}
                             size={'medium'}/>
                     <ListItem.Content>
-                        <Markdown>{item.data.description}</Markdown>
+                        <Markdown>{item.description}</Markdown>
                         <Text style={styles.timeStyle}>
-                            {human((Date.now() - (new Date(item.createdAt)).getTime()) / 1000)}
+                            {toHumanTime(item.updatedAt)}
                         </Text>
                     </ListItem.Content>
-                    {Boolean(item?.data.deeplink) && <ListItem.Chevron/>}
+                    {Boolean(item?.deeplink) && <ListItem.Chevron/>}
                 </ListItem>
 
             </TouchableOpacity>
@@ -212,7 +215,7 @@ const InboxScreen = (props) => {
         <SafeAreaView style={styles.container}>
             <View></View>
             <SwipeListView
-                data={inboxData.data.filter(inbox => inbox.data.status !== 'HIDDEN')}
+                data={inboxData.data.filter(inbox => inbox.status !== 'HIDDEN')}
                 renderItem={renderItem}
                 renderHiddenItem={renderHiddenItem}
                 leftOpenValue={75}

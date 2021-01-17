@@ -8,7 +8,7 @@ import URI from 'urijs';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import BackHeader from '../../components/BackHeader';
 import NoData from '../../components/NoData';
-import {useAppSettingsState} from "../../context/AppSettingsContext";
+import {useAppSettingsState} from '../../context/AppSettingsContext';
 
 function LoadingIndicatorView() {
     return (
@@ -23,18 +23,20 @@ function WebViewScreen(props) {
     let userData = useSelector((rootReducer) => rootReducer.userData);
     const [details, setDetails] = useState('');
     const [url, setUrl] = useState('');
+    const [title, setTitle] = useState(undefined);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        let params = props.route.params;
-        console.log('web details params ===> ', params)
+        let params = props.route?.params;
+        console.log('web details params ===> ', params);
         setUrl(params?.query);
+        setTitle(params?.title);
     }, []);
 
     if (url !== '' && url !== undefined) {
         return (
             <SafeAreaView style={styles.container}>
-                <BackHeader goBack={() => props.navigation.goBack()}/>
+                <BackHeader goBack={() => props.navigation.goBack()} title={title}/>
                 <WebView
                     source={{uri: url}}
                     // source={{uri: 'https://google.com'}}
@@ -79,7 +81,7 @@ const useStyles = (globalStyle) => {
             justifyContent: 'center',
             alignItems: 'center',
         },
-    })
+    });
 };
 
 export default WebViewScreen;

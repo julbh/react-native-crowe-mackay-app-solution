@@ -17,6 +17,7 @@ const normalAvatar = imageSize.normal;
 
 function ChatList(props) {
     const {config} = useAppSettingsState();
+    const auth_strategy = config.app_settings?.auth_strategy === 'NONE';
     const styles = useStyles(config.style);
     const globalStyle = {...config.style};
 
@@ -27,7 +28,8 @@ function ChatList(props) {
     const [user, setUser] = useState({});
 
     useEffect(() => {
-        let curUser = (jwtDecode(userData.id_token));
+        let curUser = auth_strategy ? {} : (jwtDecode(userData.id_token));
+        // let curUser = (jwtDecode(userData.id_token));
         setUser(curUser);
     }, []);
     console.log('chat history === > ', chatHistoryData)
@@ -131,8 +133,8 @@ function ChatList(props) {
                                         />
                                         <Avatar
                                             rounded={true}
-                                            source={users[1].picture !== undefined && users[1].picture !== '' ?
-                                                { uri: users[1].picture } : noAvatar}
+                                            source={Boolean(users[1]?.picture) ?
+                                                { uri: users[1]?.picture } : noAvatar}
                                             size={smallAvatar}
                                             containerStyle={styles.rightAvatar}
                                         />
@@ -141,8 +143,8 @@ function ChatList(props) {
                                     <View style={styles.avatars}>
                                         <Avatar
                                             rounded={true}
-                                            source={users[0].picture !== undefined && users[0].picture !== '' ?
-                                                { uri: users[0].picture } : noAvatar}
+                                            source={Boolean(users[0]?.picture) ?
+                                                { uri: users[0]?.picture } : noAvatar}
                                             size={normalAvatar}
                                         />
                                     </View>
@@ -153,15 +155,15 @@ function ChatList(props) {
                             <View style={styles.avatars}>
                                 <Avatar
                                     rounded={true}
-                                    source={users[0].picture !== undefined && users[0].picture !== '' ?
-                                        { uri: users[0].picture } : noAvatar}
+                                    source={Boolean(users[0]?.picture) ?
+                                        { uri: users[0]?.picture } : noAvatar}
                                     size={smallAvatar}
                                     containerStyle={styles.leftAvatar}
                                 />
                                 <Avatar
                                     rounded={true}
-                                    source={users[1].picture !== undefined && users[1].picture !== '' ?
-                                        { uri: users[1].picture } : noAvatar}
+                                    source={Boolean(users[1]?.picture) ?
+                                        { uri: users[1]?.picture } : noAvatar}
                                     size={smallAvatar}
                                     containerStyle={styles.rightAvatar}
                                 />

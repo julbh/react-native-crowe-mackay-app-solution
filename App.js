@@ -50,7 +50,7 @@ import WebViewScreen from './src/screens/Common/WebViewScreen';
 import {
     AppSettingsProvider,
     getAppSettings,
-    useAppSettingsDispatch,
+    useAppSettingsDispatch, useAppSettingsState,
     useDefaultSettings,
 } from './src/context/AppSettingsContext';
 import {
@@ -107,6 +107,8 @@ const Main = () => {
     const dispatch = useDispatch();
     const state = useSelector(({userData}) => userData);
     const dialogState = useSelector(({dialogState}) => dialogState);
+    const {config} = useAppSettingsState();
+    const auth_strategy = config.app_settings?.auth_strategy === 'NONE';
 
     React.useEffect(() => {
         let channel = pusher.subscribe(SUBSCRIBE_TO_CHANNEL);
@@ -167,7 +169,7 @@ const Main = () => {
 
                 <NavigationContainer>
                     <Stack.Navigator headerMode={'none'}>
-                        {state.access_token === null ? (
+                        {!auth_strategy && state.access_token === null ? (
                             <Stack.Screen name="Auth" component={AuthNavigator}/>
                         ) : (
                             <>

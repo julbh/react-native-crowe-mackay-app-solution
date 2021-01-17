@@ -4,7 +4,7 @@ import {BASE_URL, X_API_KEY} from '../../config';
 
 const apiBase = axios.create({baseURL: BASE_URL});
 
-export const getFeedService = () => {
+export const getFeedService0 = () => {
     const app_prefix = global.app_prefix;
     console.log('app_prefix feed ===> ', app_prefix)
     return new Promise((resolve, reject) => {
@@ -50,6 +50,61 @@ export const getFeedService = () => {
                     return 0;
                 });
                 resolve(allFeeds);
+            })
+            .catch(err => {
+                reject(err);
+            });
+    });
+};
+
+export const getFeedService = (param) => {
+    const app_prefix = global.app_prefix;
+    console.log('app_prefix feed ===> ', app_prefix)
+    let {page, user_id} = param;
+    return new Promise((resolve, reject) => {
+        // apiBase(`dev/db/test-posts?data.is_flagged!=TRUE`, {
+        apiBase(`dev/feeds?page=${page}&user_id=${user_id}`, {
+            method: 'get',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'x-api-key': X_API_KEY,
+            },
+        })
+            .then(async (res) => {
+                let allFeeds = res.data.feeds || [];
+                // console.log('all feeds ==> ', allFeeds)
+                /*for (let feed of res.data.feeds) {
+                    let tmpFeed = {...feed};
+                    let user_id = feed.data.user_id;
+                    let userInfo = null;
+                    try {
+                        userInfo = await apiBase(`dev/db/users/${user_id}`, {
+                            method: 'get',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'x-api-key': X_API_KEY,
+                            },
+                        });
+                    } catch (e) {
+                        userInfo = null;
+                    }
+                    if (userInfo !== null) {
+                        // console.log(userInfo)
+                        tmpFeed.userInfo = userInfo.data;
+                        allFeeds.push(tmpFeed);
+                    }
+                }*/
+                allFeeds.sort((a, b) => {
+                    if (a.updatedAt > b.updatedAt) {
+                        return -1;
+                    }
+                    if (a.updatedAt < b.updatedAt) {
+                        return 1;
+                    }
+                    return 0;
+                });
+                resolve({allFeeds, loadmore: res.data.load_more});
             })
             .catch(err => {
                 reject(err);

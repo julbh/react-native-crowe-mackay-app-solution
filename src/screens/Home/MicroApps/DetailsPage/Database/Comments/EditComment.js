@@ -16,6 +16,7 @@ import {useAppSettingsState} from "../../../../../../context/AppSettingsContext"
 
 function EditComment({navigation, route}) {
     const {config} = useAppSettingsState();
+    const auth_strategy = config.app_settings?.auth_strategy === 'NONE';
     const styles = useStyles(config.style);
     const globalStyle = {...config.style};
 
@@ -45,7 +46,7 @@ function EditComment({navigation, route}) {
     useEffect(() => {
         setLoading(true);
         let id_token = userData.id_token;
-        let user = (jwtDecode(id_token));
+        let user =  auth_strategy ? {} :(jwtDecode(id_token));
         setCurrentUser(user);
         if (route?.params?.action === 'new') {
             setActionType('new');
@@ -108,7 +109,7 @@ function EditComment({navigation, route}) {
             'prefix': app_prefix,
             'title': `New Comment Added`,
             'body': `${current_user.full_name} has commented on your submission.`,
-            'scheme': 'croweappsolution',
+            'scheme': 'tcogcontainer',
             'deeplink': `comment/${commentItem._id}`,
             'receiver_email': formItem.user?.data.email,
             'sender_email': current_user.email,

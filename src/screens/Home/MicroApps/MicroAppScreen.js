@@ -3,7 +3,7 @@ import {
     View,
     StyleSheet,
     TouchableOpacity,
-    FlatList, SafeAreaView, Animated,
+    FlatList, SafeAreaView, Animated, Alert,
 } from 'react-native';
 import {Avatar, Image, ListItem} from 'react-native-elements';
 import {connect, useDispatch, useSelector} from 'react-redux';
@@ -11,8 +11,11 @@ import _ from 'lodash';
 import * as Actions from '../../../redux/actions';
 import LoadingScreen from './components/LoadingScreen';
 import {DATA} from '../../../services/common';
-import {getMicroAppByIdService} from '../../../services/microApps';
-import {useAppSettingsState} from "../../../context/AppSettingsContext";
+import {checkPermissionService, checkSubscriptionService, getMicroAppByIdService} from '../../../services/microApps';
+import {useAppSettingsState} from '../../../context/AppSettingsContext';
+import jwtDecode from 'jwt-decode';
+import LoadingOverlay from '../../../components/LoadingOverlay';
+import LoadingSpinner from '../../../components/LoadingSpinner';
 
 const wait = (timeout) => {
     return new Promise(resolve => {
@@ -32,6 +35,10 @@ const MicroAppScreen = (props) => {
     const [microApps, setMicroApps] = useState([]);
     const [loading, setLoading] = useState(false);
     const [parents, setParents] = useState([]);
+    const [checkSubscribe, setCheckSubscribe] = useState(false);
+    const [checkingPermission, setCheckingPermission] = useState(false);
+
+    const auth_strategy = config.app_settings?.auth_strategy === 'NONE';
 
     const ref = useRef(null);
 
@@ -122,9 +129,85 @@ const MicroAppScreen = (props) => {
         // wait(500).then(() => setLoading(false));
     }, [props.microAppData.parents]);
 
-    const onClickApp = (item) => {
+    const checkSubscription = async (item) => {
+        try {
+            let {email} = auth_strategy ? {} : (jwtDecode(userData.id_token));
+            const payload = {
+                ...item?.subscription,
+                email,
+            };
+            return await checkSubscriptionService(payload);
+        } catch (e) {
+            return false;
+        }
+    };
+
+    const checkPermission = async (item) => {
+        let {user_id} = auth_strategy ? {} : (jwtDecode(userData.id_token));
+        let payload = {
+            current_user_id: user_id,
+            policy_id: item.permission?.policy_id.join(','),
+            hierchy_mode: item.permission?.hierchy_mode,
+        };
+        try {
+            let allowed_groups = await checkPermissionService(payload);
+            let result = _.intersection(item.permission?.group_id, allowed_groups?.allowed_group_ids);
+            return result.length > 0;
+        } catch (e) {
+            return false;
+        }
+    };
+
+    const onClickApp = async (item) => {
+        try {
+            let subscription = true;
+            if (Boolean(item.subscription)) {
+                setCheckSubscribe(true);
+                try {
+                    subscription = await checkSubscription(item);
+                    setCheckSubscribe(false);
+                } catch (e) {
+                    subscription = false;
+                    setCheckSubscribe(false);
+                }
+            }
+
+            if (!subscription) {
+                // props.navigation.navigate({name: 'WebDetails', params: item.subscription});
+                let permission = true;
+                if (Boolean(item.permission)) {
+                    setCheckingPermission(true);
+                    try {
+                        permission = await checkPermission(item);
+                        setCheckingPermission(false);
+                    } catch (e) {
+                        permission = false;
+                        setCheckingPermission(false);
+                    }
+                }
+                if (!permission) {
+                    props.navigation.navigate({name: 'WebDetails', params: item.subscription});
+                    // Alert.alert(`You don't have permission for this micro app!`);
+                    // return;
+                } else {
+                    setLoading(true);
+                    navigateMicroApps(item);
+                }
+            } else {
+                navigateMicroApps(item);
+            }
+            setLoading(false);
+        } catch (e) {
+            return;
+            setLoading(false);
+        }
+    };
+
+    const navigateMicroApps = (item) => {
         if (item.class === 'WEB') {
             props.navigation.navigate({name: 'WebDetails', params: item});
+        } else if (item.class === 'PDF') {
+            props.navigation.navigate({name: 'PDFDetails', params: item});
         } else if (item.class === 'FOLDER') {
             let curNodes = [...props.microAppData.parents, item.id];
             props.setMicroParents(curNodes);
@@ -134,14 +217,23 @@ const MicroAppScreen = (props) => {
             props.navigation.navigate({name: 'FormScreen', params: {...item, navTitle: item.title}});
         } else if (item.class === 'AGENDA') {
             // props.navigation.navigate({name: 'Agenda', params: item});
-            props.navigation.navigate('ProgramNav', {screen: 'ProgramScreen', params: {...item, navTitle: item.title}});
+            props.navigation.navigate('ProgramNav', {
+                screen: 'ProgramScreen',
+                params: {...item, navTitle: item.title},
+            });
         } else if (item.class === 'ALBUM_LIST') {
             // props.navigation.navigate({name: 'Agenda', params: item});
-            props.navigation.navigate('AlbumNav', {screen: 'AlbumList', params: {...item, navTitle: item.title}});
+            props.navigation.navigate('AlbumNav', {
+                screen: 'AlbumList',
+                params: {...item, navTitle: item.title},
+            });
         } else if (item.class === 'DATABASE') {
             // props.navigation.navigate({name: 'Agenda', params: item});
             console.log('go to database list ==> ', item);
-            props.navigation.navigate('DatabaseNav', {screen: 'DatabaseList', params: {...item, navTitle: item.title}});
+            props.navigation.navigate('DatabaseNav', {
+                screen: 'DatabaseList',
+                params: {...item, navTitle: item.title},
+            });
         } else if (item.class === 'WOOCOMMERCE') {
             props.navigation.navigate('WCPageNav',
                 {
@@ -149,6 +241,9 @@ const MicroAppScreen = (props) => {
                     params: {item},
                 },
             );
+        } else if (item.class === 'LIST') {
+            // props.navigation.navigate({name: 'ListClassScreen', params: item});
+            props.navigation.navigate('ListClassNav', {screen: 'ListClassScreen', params: item});
         }
     };
 
@@ -167,6 +262,14 @@ const MicroAppScreen = (props) => {
                 />
             </SafeAreaView>
         );
+    }
+
+    if (checkSubscribe) {
+        return <LoadingSpinner title={'Checking membership type...'}/>;
+    }
+
+    if (checkingPermission) {
+        return <LoadingSpinner title={'Checking user policy ...'}/>;
     }
 
     const renderItem = ({item}) => {
@@ -188,11 +291,13 @@ const MicroAppScreen = (props) => {
         );
     };
 
+    console.log('microApps -===> ', microApps)
+
     return (
         <SafeAreaView style={styles.container}>
             <View></View>
             <FlatList
-                data={microApps}
+                data={microApps.filter(o => !Boolean(o?.is_hidden))}
                 renderItem={renderItem}
                 keyExtractor={item => item.id}
                 onRefresh={onRefresh}
@@ -216,7 +321,7 @@ const useStyles = (globalStyle) => {
         descriptionStyle: {
             fontSize: 12,
         },
-    })
+    });
 };
 
 const mapStateToProps = state => ({

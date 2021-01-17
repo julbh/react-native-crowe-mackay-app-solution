@@ -36,7 +36,7 @@ function AlbumList(props) {
     useEffect(() => {
         let params = props.route.params;
         let id_token = userData.id_token;
-        let {user_id} = (jwtDecode(id_token));
+        // let {user_id} = (jwtDecode(id_token));
 
         let url = params.payload.fetch_collection;
         dispatch(Actions.getAlbumsAction(url));

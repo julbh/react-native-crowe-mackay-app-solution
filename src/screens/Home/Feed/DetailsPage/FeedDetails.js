@@ -55,32 +55,33 @@ function FeedDetails(props) {
             <View containerStyle={styles.viewContent}>
                 <ListItem bottomDivider>
                     <Avatar rounded
-                            source={item.userInfo.data.picture === undefined || '' ? noImage : {uri: item.userInfo.data.picture}}/>
+                            source={item.user.picture === undefined || '' ? noImage : {uri: item.user.picture}}/>
+                            {/*source={item.userInfo.data.picture === undefined || '' ? noImage : {uri: item.userInfo.data.picture}}/>*/}
                     <ListItem.Content>
-                        <ListItem.Title style={styles.titleStyle}>{item.userInfo.data.full_name}</ListItem.Title>
-                        <ListItem.Subtitle>{item.userInfo.data.position}</ListItem.Subtitle>
+                        <ListItem.Title style={styles.titleStyle}>{item.user.full_name}</ListItem.Title>
+                        <ListItem.Subtitle>{item.user.bio}</ListItem.Subtitle>
                     </ListItem.Content>
                 </ListItem>
                 {
                     item.medias.videos.length === 0 ?
                         <>
-                            {(item.data.media[0] !== undefined || item.data.media[0] !== '') &&
+                            {(item.media[0] !== undefined || item.media[0] !== '') &&
                             <TouchableOpacity
                                 onPress={() => setIsVisible(true)}
                             >
                                 <View onLayout={onLayoutImage}>
-                                    {item.data.media[0] !== undefined && item.data.media[0] !== '' &&
+                                    {item.media[0] !== undefined && item.media[0] !== '' &&
                                     <AutoHeightImage
                                         width={width}
-                                        source={item.data.media[0] === undefined || item.data.media[0] === '' ? noImage : {uri: item.data.media[0]}}
+                                        source={item.media[0] === undefined || item.media[0] === '' ? noImage : {uri: item.media[0]}}
                                         // fallbackSource={image}
                                     />}
                                 </View>
-                                {item.data.media.length > 1 &&
+                                {item.media.length > 1 &&
                                 <Badge
                                     containerStyle={{position: 'absolute', top: 4, right: 4}}
                                     badgeStyle={{backgroundColor: '#00000055'}}
-                                    value={`1/${item.data.media.length}`}
+                                    value={`1/${item.media.length}`}
                                 />}
                             </TouchableOpacity>}
                         </>
@@ -110,7 +111,7 @@ function FeedDetails(props) {
                         </TouchableOpacity>
                 }
                 <View style={styles.contentStyle}>
-                    <Markdown>{item.data.content}</Markdown>
+                    <Markdown>{item.content}</Markdown>
                 </View>
                 <Card.Title style={styles.timeStyle}>
                     {human((Date.now() - (new Date(item.updatedAt)).getTime()) / 1000)}

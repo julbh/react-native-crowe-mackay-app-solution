@@ -8,6 +8,7 @@ import {useAppSettingsState} from "../../../../context/AppSettingsContext";
 
 function FeedListHeader({title, onClick}) {
     const {config} = useAppSettingsState();
+    const auth_strategy = config.app_settings?.auth_strategy === 'NONE';
     const styles = useStyles(config.style);
     const globalStyle = {...config.style};
 
@@ -15,12 +16,13 @@ function FeedListHeader({title, onClick}) {
     const userData = useSelector(({userData}) => userData);
 
     useEffect(() => {
-        let curUser = (jwtDecode(userData.id_token));
+        // let curUser = (jwtDecode(userData.id_token));
     }, []);
 
     const countUnread = () => {
         if(chatHistoryData.data !== undefined){
-            let curUser = (jwtDecode(userData.id_token));
+            // let curUser = (jwtDecode(userData.id_token));
+            let curUser = auth_strategy ? {} : (jwtDecode(userData.id_token));
             return chatHistoryData.data.filter(item => {
                     // console.log('countUnread ====> ', item.data);
                     return Boolean(item.data.channel_payload.read) && !Boolean(item.data.channel_payload.read[curUser.user_id]);

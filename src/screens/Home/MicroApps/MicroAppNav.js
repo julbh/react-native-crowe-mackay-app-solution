@@ -14,6 +14,9 @@ import AlbumNav from './DetailsPage/Albums/AlbumNav';
 import DatabaseNav from './DetailsPage/Database/DatabaseNav';
 import WCPageNav from './WCPage/WCPageNav';
 import {useAppSettingsState} from "../../../context/AppSettingsContext";
+import PDFDetails from './DetailsPage/PDFDetails';
+import ListClass from './DetailsPage/ListClass/ListClass';
+import ListClassNav from './DetailsPage/ListClass/ListClassNav';
 
 const Stack = createStackNavigator();
 
@@ -54,6 +57,23 @@ function MicroAppNav(props) {
             <Stack.Screen
                 name="WebDetails"
                 component={WebDetails}
+                options={{
+                    title: 'Details',
+                    headerStyle: {
+                        backgroundColor: '#F2F2F2',
+                        height: 50,
+                        borderBottomColor: globalStyle?.gray_tone_3,
+                    },
+                    headerTintColor: globalStyle?.primary_color_2,
+                    headerTitleStyle: {
+                        fontSize: 20,
+                        fontWeight: 'bold',
+                        color: globalStyle?.primary_color_2,
+                    },
+                }}/>
+            <Stack.Screen
+                name="PDFDetails"
+                component={PDFDetails}
                 options={{
                     title: 'Details',
                     headerStyle: {
@@ -152,6 +172,14 @@ function MicroAppNav(props) {
                 component={WCPageNav}
                 options={{
                     title: "WCPageNav",
+                    headerShown: false,
+                }}
+            />
+            <Stack.Screen
+                name="ListClassNav"
+                component={ListClassNav}
+                options={{
+                    title: 'List',
                     headerShown: false,
                 }}
             />

@@ -4,7 +4,7 @@ import Spinner from "react-native-spinkit";
 // import {globalStyle} from '../assets/style';
 import {useAppSettingsState} from "../context/AppSettingsContext";
 
-function LoadingOverlay() {
+function LoadingOverlay(props) {
     const {config} = useAppSettingsState();
     const styles = useStyles(config.style);
     const globalStyle = {...config.style};
@@ -15,11 +15,13 @@ function LoadingOverlay() {
                 style={styles.spinner}
                 isVisible={true}
                 size={100}
-                type={'FadingCircleAlt'}
+                type={'Circle'}
                 color={globalStyle?.primary_color_2}
             />
             <View style={styles.textContainer}>
-                <Text style={styles.text}>Wait ...</Text>
+                <Text style={styles.text}>
+                    {props.title || 'Wait ...'}
+                </Text>
             </View>
         </View>
     );

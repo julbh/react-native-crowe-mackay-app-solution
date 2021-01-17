@@ -27,6 +27,7 @@ import {useAppSettingsState} from "../../../../context/AppSettingsContext";
 
 const ChatBox = (props) => {
     const {config} = useAppSettingsState();
+    const auth_strategy = config.app_settings?.auth_strategy === 'NONE';
 
     const dispatch = useDispatch();
     const chatMessages = useSelector(({chatMessage}) => chatMessage);
@@ -84,7 +85,7 @@ const ChatBox = (props) => {
 
     useEffect(() => {
         let id_token = userData.id_token;
-        let curUser = (jwtDecode(id_token));
+        let curUser = auth_strategy ? {} : (jwtDecode(id_token));
         let user = {
             avatar: curUser.picture,
             name: curUser.full_name,

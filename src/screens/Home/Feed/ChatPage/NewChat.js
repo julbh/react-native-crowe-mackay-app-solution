@@ -17,6 +17,7 @@ import UserLoading from '../components/UserLoading';
 import {imageSize} from '../../../../config';
 import jwtDecode from 'jwt-decode';
 import {useAppSettingsState} from "../../../../context/AppSettingsContext";
+import {getContactListService} from '../../../../services/microApps/userService';
 
 const wait = (timeout) => {
     return new Promise(resolve => {
@@ -26,6 +27,7 @@ const wait = (timeout) => {
 
 const NewChat = (props) => {
     const {config} = useAppSettingsState();
+    const auth_strategy = config.app_settings?.auth_strategy === 'NONE';
     const styles = useStyles(config.style);
     const globalStyle = {...config.style};
 
@@ -44,10 +46,10 @@ const NewChat = (props) => {
 
     const onRefresh = React.useCallback(() => {
         setRefreshing(true);
-        getAllUsersService(user.user_id).then((users) => {
+        getContactListService(user.user_id).then((users) => {
             setLoading(false);
-            let sortedUsers = _.sortBy(users, o => o.data.full_name);
-            setUsers(sortedUsers);
+            // let sortedUsers = _.sortBy(users, o => o.data.full_name);
+            setUsers(users);
             setRefreshing(false);
         }).catch(err => {
             setLoading(false);
@@ -57,17 +59,21 @@ const NewChat = (props) => {
     }, []);
 
     useEffect(() => {
-        let curUser = (jwtDecode(userData.id_token));
+        let curUser = auth_strategy ? {} : (jwtDecode(userData.id_token));
+        // let curUser = (jwtDecode(userData.id_token));
         setUser(curUser);
         setLoading(true);
-        getAllUsersService(curUser.user_id).then((users) => {
+        getContactListService(curUser.user_id).then((users) => {
             setLoading(false);
-            let sortedUsers = _.sortBy(users, o => o.data.full_name);
-            setUsers(sortedUsers);
+            // let sortedUsers = _.sortBy(users, o => o.data.full_name);
+            // setUsers(sortedUsers);
+            setUsers(users);
         }).catch(err => {
             setLoading(false);
         });
     }, []);
+
+    console.log('allUsers ====> ', allUsers, selectedUsers)
 
     const renderLoading = () => <UserLoading/>;
 
@@ -114,18 +120,18 @@ const NewChat = (props) => {
         return (
             <ListItem
                 bottomDivider
-                containerStyle={item.data.status === 'READ' ? styles.expiredCardContainer : null}
+                // containerStyle={item.data.status === 'READ' ? styles.expiredCardContainer : null}
             >
                 <Avatar
                     rounded
-                    source={item.data.picture !== undefined && item.data.picture !== '' ?
-                        {uri: item.data.picture} : noAvatar}
+                    source={item.picture !== undefined && item.picture !== '' ?
+                        {uri: item.picture} : noAvatar}
                     size={imageSize.normal}
                 />
                 <ListItem.Content>
-                    <ListItem.Title>{item.data.full_name}</ListItem.Title>
+                    <ListItem.Title>{item.full_name}</ListItem.Title>
                     <ListItem.Subtitle
-                        style={{color: globalStyle?.gray_tone_2}}>{item.data.position}</ListItem.Subtitle>
+                        style={{color: globalStyle?.gray_tone_2}}>{item.bio}</ListItem.Subtitle>
                 </ListItem.Content>
                 <ListItem.CheckBox
                     center
@@ -159,14 +165,14 @@ const NewChat = (props) => {
                             key={index}
                             avatar={<Avatar
                                 rounded
-                                source={{uri: user.data.picture}}
+                                source={{uri: user.picture}}
                                 /*source={{
                                     uri: 'https://s3.amazonaws.com/uifaces/faces/twitter/ladylexy/128.jpg',
                                 }}*/
                             />}
                             children={
                                 <View style={styles.chipTextWraper}>
-                                    <Text style={styles.chipText}>{user.data.full_name}</Text>
+                                    <Text style={styles.chipText}>{user.full_name}</Text>
                                     <Icon
                                         name={'close-circle-outline'}
                                         type={'material-community'}
@@ -182,7 +188,7 @@ const NewChat = (props) => {
             <FlatList
                 removeClippedSubviews={true}
                 initialNumToRender={5}
-                data={allUsers.filter(user => user.data.full_name.toLowerCase().includes(searchText.toLowerCase()))}
+                data={allUsers.filter(user => user.full_name?.toLowerCase().includes(searchText.toLowerCase()))}
                 renderItem={renderItem}
                 keyExtractor={item => item._id}
                 onRefresh={onRefresh}

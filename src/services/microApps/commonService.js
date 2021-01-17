@@ -58,7 +58,7 @@ export const updateCounterService = (object_id, data) => {
             data
         })
             .then(async (res) => {
-                // console.log('micro app data ==> ', res.data)
+                console.log('updateCounterService ==> ', res.data)
                 resolve(res.data);
             })
             .catch(err => {

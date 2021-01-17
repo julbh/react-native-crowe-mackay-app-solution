@@ -102,15 +102,17 @@ export function CustomTabBar(props) {
                             flexDirection: 'row',
                             justifyContent: 'center',
                             alignItems: 'center',
+                            borderTopColor: 'lightgrey',
+                            borderTopWidth: 0.5,
 
-                            shadowColor: "#000",
-                            shadowOffset: {
-                                width: 0,
-                                height: 18,
-                            },
-                            shadowOpacity: 0.6,
-                            shadowRadius: 11.14,
-                            elevation: 17,
+                            // shadowColor: "#000",
+                            // shadowOffset: {
+                            //     width: 0,
+                            //     height: 18,
+                            // },
+                            // shadowOpacity: 0.6,
+                            // shadowRadius: 11.14,
+                            // elevation: 17,
 
                             backgroundColor: '#fff',
                             // backgroundColor: isFocused ? '#CCCCCC' : '#fff',

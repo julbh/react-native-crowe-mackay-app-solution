@@ -5,7 +5,7 @@ import {
     StyleSheet,
     StatusBar,
     TouchableOpacity,
-    ScrollView, Linking, Alert, RefreshControl, View,
+    ScrollView, Linking, Alert, RefreshControl, View, Dimensions,
 } from 'react-native';
 import {getFeedAction, setFeedAction} from '../../../redux/actions/feedAction';
 import * as Actions from '../../../redux/actions';
@@ -22,9 +22,16 @@ import Toast from 'react-native-simple-toast';
 import jwtDecode from 'jwt-decode';
 import human from 'human-time';
 import LoadingScreen from './components/LoadingScreen';
-import {createShortCode, DATA, getUsersByIds, parseMedia, uriToBlob} from '../../../services/common';
-import {uploadFeedImage, uploadFeedService} from '../../../services/feed';
-// import {globalStyle} from '../../../assets/style';
+import {
+    createShortCode,
+    DATA,
+    getUsersByIds,
+    parseMedia,
+    timeToSeconds,
+    toHumanTime,
+    uriToBlob,
+} from '../../../services/common';
+import {getFeedService, uploadFeedImage, uploadFeedService} from '../../../services/feed';
 import noImage from '../../../assets/images/no-image.jpg';
 import noAvatar from '../../../assets/images/no_avatar.png';
 import selectImage from '../../../assets/images/selectImage.png';
@@ -33,7 +40,7 @@ import {pusher} from '../../../../App';
 import {CHAT_EVENT, SUBSCRIBE_TO_CHANNEL} from '../../../config';
 import {getChatHistoryService, updateHistoryService} from '../../../services/feed/chatService';
 import {GET_CHAT_HISTORY_ERR, GET_CHAT_HISTORY_REQ, GET_CHAT_HISTORY_SUC} from '../../../redux/constants/chatConstants';
-import {useAppSettingsState} from "../../../context/AppSettingsContext";
+import {useAppSettingsState} from '../../../context/AppSettingsContext';
 
 const wait = (timeout) => {
     return new Promise(resolve => {
@@ -58,24 +65,32 @@ function FeedList(props) {
     const [loading, setLoaing] = useState(false);
     const [refreshing, setRefreshing] = React.useState(false);
     const [cardWidth, setCardWidth] = React.useState(0);
-    let userData = useSelector((rootReducer) => rootReducer.userData);
+    const userData = useSelector((rootReducer) => rootReducer.userData);
+    const [loadmore, setLoadmore] = useState(false);
+    const [pagination, setPagination] = useState(1);
+    const [loadmoreEnd, setLoadmoreEnd] = useState(false);
+
+    const auth_strategy = config.app_settings?.auth_strategy === 'NONE';
 
     const onRefresh = React.useCallback(() => {
         setRefreshing(true);
-        props.getFeed();
-        let {user_id} = (jwtDecode(props.userData.id_token));
+        let {user_id} = auth_strategy ? '' : (jwtDecode(userData.id_token));
+        props.getFeed({page: 1, user_id});
+        setPagination(1);
+        setLoadmoreEnd(false);
         props.getChatHistory(user_id);
         wait(2000).then(() => setRefreshing(false));
     }, []);
 
     // get feed
     useEffect(() => {
-        props.getFeed();
+        let {user_id} = auth_strategy ? '' : (jwtDecode(userData.id_token));
+        props.getFeed({page: pagination, user_id});
     }, []);
 
     // every message received.
     const updateHistory = (data, chatHistory) => {
-        let user = (jwtDecode(props.userData.id_token));
+        let user = auth_strategy ? {} : (jwtDecode(userData.id_token));
         let tmp = chatHistory.filter(o => o.data.channel_payload.channel === data.channel);
         let currentHistory = tmp[0];
         let _id = currentHistory._id;
@@ -102,7 +117,7 @@ function FeedList(props) {
     // get chat history
     useEffect(() => {
         dispatch({type: GET_CHAT_HISTORY_REQ});
-        let {user_id} = (jwtDecode(props.userData.id_token));
+        let {user_id} = auth_strategy ? {} : (jwtDecode(userData.id_token));
         let data = {
             event: CHAT_EVENT,
             channel: SUBSCRIBE_TO_CHANNEL,
@@ -172,7 +187,8 @@ function FeedList(props) {
             if (params.type === undefined) {
                 props.feedData.feed.filter(item => item._id === id).forEach(item => {
                     if (item && ref.current) {
-                        let medias = parseMedia(item.data.media);
+                        // let medias = parseMedia(item.data.media);  // Old type
+                        let medias = parseMedia(item.media);
                         // props.navigation.navigate('Feed', {screen: 'FeedDetails', params: item});
                         props.navigation.navigate('DetailsNav', {screen: 'FeedDetails', params: {...item, medias}});
                     }
@@ -329,54 +345,97 @@ function FeedList(props) {
             });
     };
 
+    const openUserProfile = (user) => {
+        if (Boolean(user?.user_id)) {
+            props.navigation.navigate({name: 'UserProfile', params: {user}});
+        } else {
+            props.navigation.navigate({name: 'FeedWebview', params: {query: user?.profile, title: 'User Profile'}});
+        }
+    };
+
+    const openFeedDetails = (item, medias) => {
+        if (Boolean(item?.web_url)) {
+            props.navigation.navigate({name: 'FeedWebview', params: {query: item?.web_url, title: 'Feed Details'}});
+        } else {
+            props.navigation.navigate('DetailsNav', {
+                screen: 'FeedDetails',
+                // params: item,
+                params: {...item, medias},
+            });
+        }
+    };
+
+    const _handleLoadmore = () => {
+        if (!loadmoreEnd) {
+            setLoadmore(true);
+            let {user_id} = auth_strategy ? '' : (jwtDecode(userData.id_token));
+            getFeedService({page: pagination + 1, user_id}).then(res => {
+                setPagination(pagination + 1);
+                // props.setFeed([...res.allFeeds]);
+                props.setFeed([...props.feedData.feed, ...res.allFeeds]);
+                setLoadmoreEnd(!res.loadmore);
+                setLoadmore(false);
+            }).catch(err => {
+                console.log('error ==> ', err);
+                setLoadmoreEnd(true);
+                setLoadmore(false);
+            });
+        }
+    };
+
+    const onComments = (item) => {
+        console.log('on comments')
+        props.navigation.navigate('FeedComments')
+    };
+
+    const onLike = (item) => {
+
+    };
+
     const renderLoading = ({item}) => (
         <LoadingScreen/>
     );
 
     const renderItem = ({item}) => {
-        let medias = parseMedia(item.data.media);
+        // let medias = parseMedia(item.data.media);
+        let medias = parseMedia(item.media);
         // console.log('************ medias ', medias, item.data.media)
 
         return (
             <Card containerStyle={{borderRadius: 8, marginBottom: -6}}>
-                <TouchableOpacity onPress={() =>
-                    props.navigation.navigate({name: 'UserProfile', params: item.userInfo.data})
-                }>
+                <TouchableOpacity onPress={() => openUserProfile(item.user)}>
                     <ListItem bottomDivider>
                         <Avatar rounded
-                                source={item.userInfo.data.picture === undefined || '' ? noAvatar : {uri: item.userInfo.data.picture}}/>
+                                source={item.user.picture === undefined || '' ? noAvatar : {uri: item.user?.picture}}/>
+                        {/*source={item.userInfo.data.picture === undefined || '' ? noAvatar : {uri: item.userInfo.data.picture}}/>*/}
                         <ListItem.Content>
-                            <ListItem.Title style={styles.titleStyle}>{item.userInfo.data.full_name}</ListItem.Title>
+                            <ListItem.Title style={styles.titleStyle}>{item.user?.full_name}</ListItem.Title>
                             {/*<TouchableOpacity onPress={() => Linking.openURL(item.userInfo.data.data.profile)}>*/}
                             <ListItem.Subtitle
-                                style={styles.profileLink}>{item.userInfo.data.position}</ListItem.Subtitle>
+                                style={styles.profileLink}>{item.user?.bio}</ListItem.Subtitle>
                             {/*</TouchableOpacity>*/}
                         </ListItem.Content>
                     </ListItem>
                 </TouchableOpacity>
                 <TouchableOpacity
                     onPress={() =>
-                        props.navigation.navigate('DetailsNav', {
-                            screen: 'FeedDetails',
-                            // params: item,
-                            params: {...item, medias},
-                        })
+                        openFeedDetails(item, medias)
                     }>
                     {
                         medias.videos.length === 0 ?
                             <>
                                 <View onLayout={onLayoutImage}>
-                                    {item.data.media.length > 0 && item.data.media[0] !== '' && <AutoHeightImage
+                                    {item.media.length > 0 && item.media[0] !== '' && <AutoHeightImage
                                         width={cardWidth}
-                                        source={item.data.media[0] === undefined || '' ? noImage : {uri: item.data.media[0]}}
+                                        source={item.media[0] === undefined || '' ? noImage : {uri: item.media[0]}}
                                         // fallbackSource={image}
                                     />}
                                 </View>
-                                {item.data.media.length > 1 &&
+                                {item.media.length > 1 &&
                                 <Badge
                                     containerStyle={{position: 'absolute', top: 4, right: 4}}
                                     badgeStyle={{backgroundColor: '#00000055'}}
-                                    value={`1/${item.data.media.length}`}
+                                    value={`1/${item.media.length}`}
                                 />}
                             </>
                             :
@@ -409,15 +468,67 @@ function FeedList(props) {
                             />}
                         </View>*/
                     }
-                    <Markdown>{item.data.content}</Markdown>
+                    {/*<View style={styles.actionContainer}>
+                        <TouchableOpacity
+                            onPress={() => onLike(item)}
+                        >
+                            <Icon
+                                // raised
+                                // name='play-circle-o'
+                                // type='font-awesome'
+                                name='heart'
+                                type='font-awesome'
+                                color={globalStyle?.primary_color_2}
+                                size={20}
+                            />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={() => onComments(item)}
+                            style={{marginLeft: 10}}
+                        >
+                            <Icon
+                                // raised
+                                // name='play-circle-o'
+                                // type='font-awesome'
+                                name='comment-o'
+                                type='font-awesome'
+                                color={globalStyle?.primary_color_2}
+                                size={20}
+                            />
+                        </TouchableOpacity>
+                    </View>*/}
+                    <Markdown>{item?.content}</Markdown>
                     {/*<Card.Title style={styles.contentStyle}>
                         {item.data.content}
                     </Card.Title>*/}
                     <Card.Title style={styles.timeStyle}>
-                        {human((Date.now() - (new Date(item.updatedAt)).getTime()) / 1000)}
+                        {toHumanTime(item.updatedAt)}
                     </Card.Title>
                 </TouchableOpacity>
+
             </Card>
+        );
+    };
+
+    const _renderFooter = () => {
+        if (!loadmore) {
+            return null;
+        }
+
+        return (
+            <View
+                style={{
+                    padding: 15,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    flexDirection: 'row',
+                    // height: 50,
+                    // margin: 20,
+                    // borderColor: colors.veryLightPink
+                }}
+            >
+                <ActivityIndicator style={{marginTop: 15}} animating size="small"/>
+            </View>
         );
     };
 
@@ -440,10 +551,14 @@ function FeedList(props) {
             <FlatList
                 data={props.feedData.feed}
                 renderItem={renderItem}
-                keyExtractor={item => item._id}
+                // keyExtractor={item => item._id}
+                keyExtractor={item => item.content}
                 onRefresh={onRefresh}
                 refreshing={refreshing}
-                contentContainerStyle={{paddingBottom: 20}}
+                contentContainerStyle={{paddingBottom: loadmore ? 50 : 20}}
+                ListFooterComponent={_renderFooter}
+                onEndReached={_handleLoadmore}
+                onEndReachedThreshold={0.5}
             />
             <Overlay
                 isVisible={visible}
@@ -559,7 +674,12 @@ const useStyles = (globalStyle) => {
             left: 0,
             right: 0,
         },
-    })
+        actionContainer: {
+            flexDirection: 'row',
+            justifyContent: 'flex-start',
+            paddingVertical: 10,
+        },
+    });
 };
 
 const mapStateToProps = state => ({

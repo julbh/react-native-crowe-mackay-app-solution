@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
     Alert,
     Dimensions,
@@ -39,7 +39,9 @@ import BackHeader from '../../components/BackHeader';
 import {WebView} from 'react-native-webview';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import {addCounterService, updateCounterService} from '../../services/microApps/commonService';
-import {useAppSettingsState} from "../../context/AppSettingsContext";
+import {useAppSettingsState} from '../../context/AppSettingsContext';
+import {DIALOG_STATE} from '../../redux/constants/microAppConstants';
+import LoadingTitle from './components/LoadingTitle';
 
 const ProgressBar = () => {
     const {config} = useAppSettingsState();
@@ -147,6 +149,8 @@ function PlayScreen(props) {
     const [loading, setLoading] = useState(false);
     const {position, duration} = useTrackPlayerProgress(250);
 
+    // console.log('{position, duration}', {position, duration})
+
     const [connected, setConnected] = useState(network.isConnected);
     const [visibleDlg, setVisibleDlg] = useState(false);
 
@@ -198,49 +202,50 @@ function PlayScreen(props) {
         if (curTrack) {
             let item = _.find(playlistData.data, o => o.playlist._id === trackId);
             let playedTime = moment().format('MM/DD/YYYY HH:mm:ss');
-            let tmp = {
-                hId: Date.now(),
-                id: item.playlist._id,
-                url: item.playlist.data.url,
-                title: item.playlist.data.title,
-                artist: item.users[0]?.data.full_name || '',
-                description: item.playlist.data.description,
-                artwork: item.playlist.data.picture,
-                duration: timeToSeconds(item.playlist.data.duration_string),
-                web_links: Boolean(item.playlist?.data?.web_links) ? [...item.playlist?.data?.web_links] : [],
-                position: position,
-                format: 'MP3',
-                playedTime,
-            };
-            let albumStorage = await AsyncStorage.getItem('albumHistory');
-            let curAlbumHistory = JSON.parse(albumStorage);
-            let findHistory = _.find(curAlbumHistory, ['id', tmp.id]);
-            // await AsyncStorage.removeItem('albumHistory');
-            if (findHistory === undefined) {
-                let history = JSON.parse(await AsyncStorage.getItem('albumHistory'));
-                if (history === undefined || history === null) {
-                    await AsyncStorage.setItem('albumHistory', JSON.stringify([{...tmp}]));
-                } else {
-                    let newHistory = [...history];
-                    newHistory.push(tmp);
-                    await AsyncStorage.setItem('albumHistory', JSON.stringify(newHistory));
-                    // console.log('new history ===> ', newHistory);
-                }
-            } else {
-                let newHistory = [];
-                curAlbumHistory.map(h => {
-                    let tHis = {...h};
-                    if (h.id === tmp.id) {
-                        tHis = {
-                            ...h,
-                            ...tmp,
-                        };
+            if (item) {
+                let tmp = {
+                    hId: Date.now(),
+                    id: item.playlist._id,
+                    url: item.playlist.data.url,
+                    title: item.playlist.data.title,
+                    artist: item.users[0]?.data.full_name || '',
+                    description: item.playlist.data.description,
+                    artwork: item.playlist.data.picture,
+                    duration: timeToSeconds(item.playlist.data.duration_string),
+                    web_links: Boolean(item.playlist?.data?.web_links) ? [...item.playlist?.data?.web_links] : [],
+                    position: position,
+                    format: 'MP3',
+                    playedTime,
+                };
+                let albumStorage = await AsyncStorage.getItem('albumHistory');
+                let curAlbumHistory = JSON.parse(albumStorage);
+                let findHistory = _.find(curAlbumHistory, ['id', tmp.id]);
+                // await AsyncStorage.removeItem('albumHistory');
+                if (findHistory === undefined) {
+                    let history = JSON.parse(await AsyncStorage.getItem('albumHistory'));
+                    if (history === undefined || history === null) {
+                        await AsyncStorage.setItem('albumHistory', JSON.stringify([{...tmp}]));
+                    } else {
+                        let newHistory = [...history];
+                        newHistory.push(tmp);
+                        await AsyncStorage.setItem('albumHistory', JSON.stringify(newHistory));
+                        // console.log('new history ===> ', newHistory);
                     }
-                    newHistory.push(tHis);
-                });
-                await AsyncStorage.setItem('albumHistory', JSON.stringify(newHistory));
+                } else {
+                    let newHistory = [];
+                    curAlbumHistory.map(h => {
+                        let tHis = {...h};
+                        if (h.id === tmp.id) {
+                            tHis = {
+                                ...h,
+                                ...tmp,
+                            };
+                        }
+                        newHistory.push(tHis);
+                    });
+                    await AsyncStorage.setItem('albumHistory', JSON.stringify(newHistory));
+                }
             }
-
         }
     };
 
@@ -268,14 +273,21 @@ function PlayScreen(props) {
     }, []);
 
     useEffect(() => {
-        setLoading(true);
-        const initPlay = async () => {
-            await setup();
-            await togglePlayback();
-            setLoading(false);
-        };
-        initPlay();
-    }, []);
+        TrackPlayer.getCurrentTrack().then(curTrack => {
+            console.log('audio player ==', curTrack);
+            if (!curTrack) {
+                setLoading(true);
+                const initPlay = async () => {
+                    await setup();
+                    await togglePlayback();
+                    setLoading(false);
+                };
+                initPlay();
+            }
+        }).catch(err => {
+            console.log('audio player error ==> ', err);
+        });
+    }, [dialogState]);
 
     async function setup() {
         await TrackPlayer.setupPlayer({});
@@ -316,10 +328,15 @@ function PlayScreen(props) {
     }
 
     async function playRemoteFiles() {
-        await TrackPlayer.reset();
-        await TrackPlayer.add([...playlistData.formattedList]);
-        await TrackPlayer.play();
-        await TrackPlayer.setVolume(1);
+        try {
+            console.log('play remote files ==> ', playlistData.formattedList);
+            await TrackPlayer.reset();
+            await TrackPlayer.add([...playlistData.formattedList]);
+            await TrackPlayer.play();
+            await TrackPlayer.setVolume(1);
+        } catch (e) {
+            console.log('error ==> ', e);
+        }
     }
 
     async function togglePlayback() {
@@ -406,31 +423,60 @@ function PlayScreen(props) {
         await playFromStart();
     };
 
-    const handleChangeLike = async () => {
-        // console.log('================================> ',
-        //     counterData.data.filter(o => (o.data.object_id === trackId) && (o.data.user_id === userData.data.user_id) && (o.data.class === 'LIKES')));
-        let current_count = counterData.data.filter(o => (o.data.object_id === trackId) && (o.data.user_id === userData.data.user_id));
-        console.log('current ===> ', current_count, trackId);
-        try {
-            if (current_count.length === 0) {
-                let data = {
-                    object_id: trackId,
-                    user_id: userData.data.user_id,
-                    class: 'LIKES',
-                };
-                await addCounterService(data);
-            } else {
-                let class_data = current_count[0].data.class === 'LIKES' ? 'DISLIKES' : 'LIKES';
-                let data = {
-                    ...current_count[0].data,
-                    class: class_data,
-                };
-                console.log('update ===> ', data);
-                await updateCounterService(current_count[0]._id, data);
+    const delayedSubmit = useCallback(
+        _.debounce(async e => {
+            console.log('=========> ', counterData.data, e);
+            let current_count = counterData.data.filter(o => (o.data.object_id === trackId) && (o.data.user_id === userData.data.user_id));
+            console.log('current ===> ', current_count, trackId);
+            try {
+                if (current_count.length === 0) {
+                    let data = {
+                        object_id: trackId,
+                        user_id: userData.data.user_id,
+                        class: 'LIKES',
+                    };
+                    let countDa = [...counterData.data];
+                    countDa.push({
+                        _id: Date.now(),
+                        createdAt: moment().toISOString(),
+                        data: {...data},
+                        type: 'counters',
+                    });
+                    console.log('count data new ==> ', countDa);
+                    dispatch(Actions.setCountersAction(countDa));
+                    await addCounterService(data);
+                } else {
+                    let class_data = current_count[0].data.class === 'LIKES' ? 'DISLIKES' : 'LIKES';
+                    let data = {
+                        ...current_count[0].data,
+                        class: class_data,
+                    };
+                    let countDa = [];
+                    for (let cData of counterData.data) {
+                        if (current_count[0]?._id === cData._id) {
+                            countDa.push({
+                                ...cData,
+                                data: {...data},
+                            });
+                        } else {
+                            countDa.push(cData);
+                        }
+                    }
+                    console.log('update ===> ', data);
+                    dispatch(Actions.setCountersAction(countDa));
+                    await updateCounterService(current_count[0]._id, data);
+                }
+                dispatch(Actions.getCountersAction(''));
+            } catch (e) {
             }
-            dispatch(Actions.getCountersAction(''));
-        } catch (e) {
-        }
+        }, 500),
+        [],
+    );
+
+    const handleChangeLike = async () => {
+        // console.log('================================> ');
+        //     counterData.data.filter(o => (o.data.object_id === trackId) && (o.data.user_id === userData.data.user_id) && (o.data.class === 'LIKES')));
+        delayedSubmit();
     };
 
     if (showWebView) {
@@ -464,7 +510,11 @@ function PlayScreen(props) {
                                 onPress={onMinimize}
                             />
                             <View style={{alignItems: 'center', justifyContent: 'center', width: '60%'}}>
-                                <Text style={styles.fTitle}>{trackTitle || 'No Selected'}</Text>
+                                {Boolean(trackTitle) ?
+                                    <Text style={styles.fTitle}>{trackTitle || 'No Selected'}</Text>
+                                    :
+                                    <LoadingTitle style={{width: 200}}/>
+                                }
                             </View>
                             <Icon
                                 name='times'
@@ -503,16 +553,18 @@ function PlayScreen(props) {
                                                   onPress={handleChangeLike}
                                 >
                                     {
-                                        counterData.data.filter(o =>
-                                            (o.data.object_id === trackId)
-                                            && (o.data.user_id === userData.data.user_id)
-                                            && (o.data.class === 'LIKES')).length > 0 ?
-                                            <Icon name="heart" type="font-awesome" color="red"/>
+                                        counterData.data?.filter(o =>
+                                            (o.data?.object_id === trackId)
+                                            && (o.data?.user_id === userData.data?.user_id)
+                                            && (o.data?.class === 'LIKES')).length > 0 ?
+                                            <Icon name="heart" type="font-awesome"
+                                                  color={globalStyle?.primary_color_2}/>
                                             :
-                                            <Icon name="heart-o" type="font-awesome"/>
+                                            <Icon name="heart-o" type="font-awesome"
+                                                  color={globalStyle?.primary_color_2}/>
                                     }
                                     <Text style={styles.counter}>
-                                        {counterData.data.filter(o => (o.data.object_id === trackId) && (o.data.class === 'LIKES')).length}
+                                        {counterData.data?.filter(o => (o.data?.object_id === trackId) && (o.data?.class === 'LIKES'))?.length}
                                     </Text>
                                 </TouchableOpacity>
                             </View>
@@ -640,16 +692,24 @@ function PlayScreen(props) {
                                 style={styles.mImage}
                             />
                             <View style={styles.miniContent}>
-                                <Text
-                                    numberOfLines={2}
-                                    ellipsizeMode='tail'
-                                    style={{
-                                        fontSize: 16,
-                                        fontWeight: 'bold',
-                                        color: '#fff',
-                                    }}>{trackTitle || 'No Selected'}</Text>
-                                <Text numberOfLines={2} ellipsizeMode='tail'
-                                      style={{color: '#fff', fontSize: 12}}>{trackArtist || 'No Selected'}</Text>
+                                {Boolean(trackTitle) ? <Text
+                                        numberOfLines={2}
+                                        ellipsizeMode='tail'
+                                        style={{
+                                            fontSize: 16,
+                                            fontWeight: 'bold',
+                                            color: '#fff',
+                                        }}>{trackTitle || 'No Selected'}</Text>
+                                    :
+                                    <LoadingTitle style={{width: 160, height: 15}}/>
+                                }
+                                {Boolean(trackArtist) ? <Text numberOfLines={2} ellipsizeMode='tail'
+                                                              style={{
+                                                                  color: '#fff',
+                                                                  fontSize: 12,
+                                                              }}>{trackArtist || 'No Selected'}</Text>
+                                    :
+                                    <LoadingTitle width={240} style={{width: 120, height: 10, marginTop: 5}}/>}
                             </View>
                             <View style={styles.mTimeArea}>
                                 <Text style={{fontSize: 12, color: '#fff'}}>{secondsToTime(position) || ''}</Text>
@@ -794,15 +854,16 @@ const useStyles = (globalStyle) => {
             alignItems: 'center',
         },
         likeContainer: {
-            flexDirection: 'row',
+            flexDirection: 'column',
             alignItems: 'center',
             paddingVertical: 5,
         },
         counter: {
             paddingHorizontal: 5,
             color: globalStyle?.primary_color_2,
+            fontSize: 12,
         },
-    })
+    });
 };
 
 export default PlayScreen;

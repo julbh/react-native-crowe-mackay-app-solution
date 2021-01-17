@@ -1,8 +1,11 @@
 import axios from 'axios';
 import _ from 'lodash';
-import { BASE_URL, X_API_KEY} from '../../config';
+import {BASE_URL, X_API_KEY} from '../../config';
 import moment from 'moment';
 import human from 'human-time';
+import {Platform} from 'react-native';
+// import { getVideoDurationInSeconds } from 'get-video-duration';
+// import mp3Duration from 'mp3-duration';
 
 export const DATA = [
     {
@@ -25,6 +28,7 @@ export const DATA = [
 const alphabet = 'abcdefghijklmnopqrstuvwxyz1234567890';
 
 export const uriToBlob = (uri) => {
+    console.log('uri to blob ******** ', uri);
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.onload = function () {
@@ -74,16 +78,18 @@ export const parseMedia = (m) => {
 
 export const timeToSeconds = (timestring) => {
     let a = timestring.split(':'); // split it at the colons
-    let h = 0; let m = 0; let s = 0;
-    if(a.length === 3){
+    let h = 0;
+    let m = 0;
+    let s = 0;
+    if (a.length === 3) {
         h = a[0] || 0;
         m = a[1] || 0;
         s = a[2] || 0;
-    }else if(a.length === 2){
+    } else if (a.length === 2) {
         h = 0;
         m = a[0] || 0;
         s = a[1] || 0;
-    }else {
+    } else {
         h = m = 0;
         s = a[0] || 0;
     }
@@ -152,3 +158,24 @@ export const normalizeKey = (key) => {
     });
     return tmp.join(' ');
 };
+
+/*export const getVideoDuration = (url) => {
+    return new Promise((resolve, reject) => {
+        getVideoDurationInSeconds(url).then((duration) => {
+            console.log(duration)
+            resolve(duration);
+        }).catch(err => {
+            reject(err);
+        })
+    })
+};*/
+
+/*export const getAudioDuration = (url) => {
+    return new Promise((resolve, reject) => {
+        mp3Duration(url, function (err, duration) {
+            if (err) reject(err);
+            resolve(duration);
+            console.log('Your file is ' + duration + ' seconds long');
+        });
+    })
+};*/

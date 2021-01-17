@@ -4,6 +4,7 @@ import {globalStyle} from "../assets/style";
 import {
     ENV_APP_PREFIX,
     ENV_APP_NAME,
+    ENV_AUTH_STRATEGY,
 } from '@env';
 
 const initialState = {
@@ -15,8 +16,8 @@ const initialState = {
             "chat": true,
             "inbox": true,
             "microapp": true,
-            "allow_public_registration": false,
-            "auth_strategy": "SIMPLE"
+            "allow_public_registration": true,
+            "auth_strategy": ENV_AUTH_STRATEGY
         },
         loading_logo: "https://assets.tcog.hk/drshrtfarg.png",
         prefix: ENV_APP_PREFIX || "",

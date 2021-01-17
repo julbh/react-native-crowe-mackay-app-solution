@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { Platform } from 'react-native';
 import {BASE_URL, X_API_KEY} from '../../config';
 
 export const uploadAvatar = (data, blob, fileInfo) => {
@@ -16,18 +17,21 @@ export const uploadAvatar = (data, blob, fileInfo) => {
         }).then(res => {
             let file = new File([blob], {type: fileInfo.type});
             // let file = new File([blob], {type: fileInfo.mime});
-            console.log('file >>>>>>>>>>>>>>>>>', res, file, fileInfo.mime);
+            console.log('file >>>>>>>>>>>>>>>>>', res, data, fileInfo);
             fetch(res, {
                 headers: {
-                    'Content-Type': fileInfo.type,
-                    // 'Content-Type': fileInfo.mime,
+                    // 'Content-Type': Platform.OS === 'android' ? fileInfo.type : fileInfo.mime,
+                    'Content-Type': fileInfo.mime,
                     'x-amz-acl': 'public-read',
                 },
                 method: 'PUT',
                 body: file,
-                contentType: fileInfo.type,
-                // contentType: fileInfo.mime,
-                processData: false,
+                // cache: false,
+                // contentType: Platform.OS === 'android' ? fileInfo.type : fileInfo.mime,
+                contentType: fileInfo.mime,
+                // processData: false,
+                // crossDomain: true,
+                // timeout: 3000,
             }).then(res => {
                 let url = `https://assets.tcog.hk/${data.Key}`;
                 resolve(url);
@@ -98,6 +102,29 @@ export const getUserProfile = (user_id) => {
         let config = {
             method: 'get',
             url: `dev/db/${app_prefix}users/${user_id}`,
+            // url: 'dev/db/users/5f6a81fc1602a40008b0031d',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': X_API_KEY,
+            },
+        };
+        api(config)
+            .then(res => {
+                resolve(res);
+            })
+            .catch(err => {
+                reject(err);
+            });
+    });
+};
+
+export const getProfileService = (user_id) => {
+    const app_prefix = global.app_prefix;
+    return new Promise((resolve, reject) => {
+        const api = axios.create({baseURL: BASE_URL});
+        let config = {
+            method: 'get',
+            url: `dev/profile?user_id=${user_id}`,
             // url: 'dev/db/users/5f6a81fc1602a40008b0031d',
             headers: {
                 'Content-Type': 'application/json',

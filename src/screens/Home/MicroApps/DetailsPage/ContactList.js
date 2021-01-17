@@ -9,12 +9,12 @@ import {useDispatch, useSelector} from 'react-redux';
 import _ from 'lodash';
 import noAvatar from '../../../../assets/images/no_avatar.png';
 import {DATA} from '../../../../services/common';
-// import {globalStyle} from '../../../../assets/style';
 import LoadingScreen from './../components/LoadingScreen';
 import {getAllUsersService} from '../../../../services/microApps';
 import {imageSize} from '../../../../config';
 import jwtDecode from 'jwt-decode';
 import {useAppSettingsState} from "../../../../context/AppSettingsContext";
+
 
 const wait = (timeout) => {
     return new Promise(resolve => {
@@ -38,6 +38,8 @@ const ContactList = (props) => {
 
     const [currentUser, setUser] = useState({});
 
+    const auth_strategy = config.app_settings?.auth_strategy === 'NONE';
+
     const onRefresh = React.useCallback(() => {
         setRefreshing(true);
         getAllUsersService(currentUser.user_id).then((users) => {
@@ -53,7 +55,7 @@ const ContactList = (props) => {
     }, []);
 
     useEffect(() => {
-        let curUser = (jwtDecode(userData.id_token));
+        let curUser = auth_strategy ? {} : (jwtDecode(userData.id_token));
         setUser(curUser);
         setLoading(true);
         getAllUsersService(curUser.user_id).then((users) => {
@@ -65,7 +67,7 @@ const ContactList = (props) => {
         })
     }, []);
 
-    const renderLoading = () => <LoadingScreen/>;
+    const renderLoading = () => <LoadingScreen rounded={true}/>;
 
     if (loading || refreshing) {
         return (

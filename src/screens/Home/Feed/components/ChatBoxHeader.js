@@ -49,8 +49,8 @@ function ChatBoxHeader({title, goBack, chatUsers,}) {
                     <View style={{flexDirection: 'row', paddingVertical: 3}}>
                         <Avatar
                             rounded={true}
-                            source={users[0].picture !== undefined && users[0].picture !== '' ?
-                                {uri: users[0].picture} : noAvatar}
+                            source={Boolean(users[0]?.picture) ?
+                                {uri: users[0]?.picture} : noAvatar}
                             size={30}
                         />
                         <React.Fragment>
@@ -61,8 +61,8 @@ function ChatBoxHeader({title, goBack, chatUsers,}) {
                                             <Avatar
                                                 key={index}
                                                 rounded={true}
-                                                source={u.picture !== undefined && u.picture !== '' ?
-                                                    {uri: u.picture} : noAvatar}
+                                                source={Boolean(u?.picture) ?
+                                                    {uri: u?.picture} : noAvatar}
                                                 size={30}
                                                 containerStyle={{marginLeft: -10}}
                                             />

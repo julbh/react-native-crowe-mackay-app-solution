@@ -8,6 +8,7 @@ import {
     SUBSCRIBE_TO_CHANNEL,
     X_API_KEY,
 } from '../../config';
+import _ from 'lodash';
 
 const apiBase = axios.create({baseURL: BASE_URL});
 
@@ -31,7 +32,8 @@ export const sendMessageService = (data) => {
         .map(o => `debug-${o}`);
     const beam_data = {
         beam_meta,
-        beam_interests: user_ids,
+        beam_interests: _.uniq(user_ids),
+        // beam_interests: user_ids,
         beam_payload: {
             apns: {
                 aps: {
@@ -43,8 +45,8 @@ export const sendMessageService = (data) => {
                     },
                     badge: 12,
                 },
-                'Simulator Target Bundle': 'ca.crowemackay.conference',
-                link: `croweappsolution://chat/${data.channel_payload?.channel}`,
+                'Simulator Target Bundle': 'ca.tcogcontainer',
+                link: `tcogcontainer://chat/${data.channel_payload?.channel}`,
                 // link: `croweconference://chat/${JSON.stringify(data)}`
             },
             fcm: {
@@ -56,13 +58,19 @@ export const sendMessageService = (data) => {
                     icon: data.channel_payload.user?.avatar,
                 },
                 data: {
-                    link: `croweappsolution://chat/${data.channel_payload?.channel}`,
+                    link: `tcogcontainer://chat/${data.channel_payload?.channel}`,
                     // link: `croweconference://chat/${JSON.stringify(data)}`
                 },
             },
         },
     };
-    console.log('payload -====> ', beam_data, channel_meta, data)
+    // console.log('payload -====> ', beam_data, channel_meta, data)
+    /*console.log('post chat ===> ' , {
+        ...data,
+        prefix: app_prefix,
+        channel_meta,
+        ...beam_data,
+    })*/
     return new Promise((resolve, reject) => {
         apiBase(`dev/pusher/trigger`, {
             method: 'post',
@@ -82,7 +90,7 @@ export const sendMessageService = (data) => {
                 resolve(res);
             })
             .catch(err => {
-                console.log('send message error ==> ', err)
+                console.log('send message error @@@ ==> ', err)
                 reject(err);
             });
     });

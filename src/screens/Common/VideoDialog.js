@@ -24,7 +24,7 @@ import {setDialogStateAction} from '../../redux/actions';
 import _ from 'lodash';
 import moment from 'moment';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {useAppSettingsState} from "../../context/AppSettingsContext";
+import {useAppSettingsState} from '../../context/AppSettingsContext';
 
 const ProgressBar = (props) => {
     const {config} = useAppSettingsState();
@@ -32,6 +32,7 @@ const ProgressBar = (props) => {
     const globalStyle = {...config.style};
 
     const {position, duration, videoPlayer} = props;
+    console.log('{position, duration}', {position, duration})
 
     const [sliderValue, setSliderValue] = useState(0);
 
@@ -151,7 +152,7 @@ function VideoDialog(props) {
             playFromStart();
         }
         // playFromStart();
-    }, []);
+    }, [props]);
 
     useEffect(() => {
         if (network.isConnected) {
@@ -162,53 +163,55 @@ function VideoDialog(props) {
     }, [network.isConnected]);
 
     const saveHistory = async (position) => {
+        console.log('%%%%%%%%%%%%%%%%%%%%%%', playlistData);
         // let curTrack = await TrackPlayer.getCurrentTrack();
         let curTrack = videoTracks[currentVideoId];
         if (curTrack !== null && curTrack !== undefined) {
             let item = _.find(playlistData.data, o => o.playlist._id === curTrack.id);
-            let playedTime = moment().format('MM/DD/YYYY HH:mm:ss');
-            let tmp = {
-                hId: Date.now(),
-                id: item.playlist._id,
-                url: item.playlist.data.url,
-                title: item.playlist.data.title,
-                artist: item.users[0].data.full_name,
-                description: item.playlist.data.description,
-                artwork: item.playlist.data.picture,
-                duration: timeToSeconds(item.playlist.data.duration_string),
-                position: position,
-                format: 'MP4',
-                playedTime,
-            };
-            let albumStorage = await AsyncStorage.getItem('albumHistory');
-            let curAlbumHistory = JSON.parse(albumStorage);
-            let findHistory = _.find(curAlbumHistory, ['id', tmp.id]);
-            // await AsyncStorage.removeItem('albumHistory');
-            if (findHistory === undefined) {
-                let history = JSON.parse(await AsyncStorage.getItem('albumHistory'));
-                if (history === undefined || history === null) {
-                    await AsyncStorage.setItem('albumHistory', JSON.stringify([{...tmp}]));
-                } else {
-                    let newHistory = [...history];
-                    newHistory.push(tmp);
-                    await AsyncStorage.setItem('albumHistory', JSON.stringify(newHistory));
-                    // console.log('new history ===> ', newHistory);
-                }
-            } else {
-                let newHistory = [];
-                curAlbumHistory.map(h => {
-                    let tHis = {...h};
-                    if (h.id === tmp.id) {
-                        tHis = {
-                            ...h,
-                            ...tmp,
-                        };
+            if (item) {
+                let playedTime = moment().format('MM/DD/YYYY HH:mm:ss');
+                let tmp = {
+                    hId: Date.now(),
+                    id: item.playlist._id,
+                    url: item.playlist.data.url,
+                    title: item.playlist.data.title,
+                    artist: item.users[0].data.full_name,
+                    description: item.playlist.data.description,
+                    artwork: item.playlist.data.picture,
+                    duration: timeToSeconds(item.playlist.data.duration_string),
+                    position: position,
+                    format: 'MP4',
+                    playedTime,
+                };
+                let albumStorage = await AsyncStorage.getItem('albumHistory');
+                let curAlbumHistory = JSON.parse(albumStorage);
+                let findHistory = _.find(curAlbumHistory, ['id', tmp.id]);
+                // await AsyncStorage.removeItem('albumHistory');
+                if (findHistory === undefined) {
+                    let history = JSON.parse(await AsyncStorage.getItem('albumHistory'));
+                    if (history === undefined || history === null) {
+                        await AsyncStorage.setItem('albumHistory', JSON.stringify([{...tmp}]));
+                    } else {
+                        let newHistory = [...history];
+                        newHistory.push(tmp);
+                        await AsyncStorage.setItem('albumHistory', JSON.stringify(newHistory));
+                        // console.log('new history ===> ', newHistory);
                     }
-                    newHistory.push(tHis);
-                });
-                await AsyncStorage.setItem('albumHistory', JSON.stringify(newHistory));
+                } else {
+                    let newHistory = [];
+                    curAlbumHistory.map(h => {
+                        let tHis = {...h};
+                        if (h.id === tmp.id) {
+                            tHis = {
+                                ...h,
+                                ...tmp,
+                            };
+                        }
+                        newHistory.push(tHis);
+                    });
+                    await AsyncStorage.setItem('albumHistory', JSON.stringify(newHistory));
+                }
             }
-
         }
     };
 
@@ -231,9 +234,12 @@ function VideoDialog(props) {
     }
 
     function playRemoteFiles() {
+        console.log('remote videos ==> ', playlistData.formattedList);
         setTracks([...playlistData.formattedList]);
         setIsPlaying(true);
     }
+
+    // console.log('videoTracks ===> ', videoTracks, videos, videoTracks[currentVideoId]?.url, currentVideoId)
 
     const togglePlayback = () => {
         setIsPlaying(!isPlaying);
@@ -379,7 +385,8 @@ function VideoDialog(props) {
                         :
                         <>
                             <Video
-                                source={{uri: videos[currentVideoId]}}   // Can be a URL or a local file.
+                                // source={{uri: videos[currentVideoId]}}   // Can be a URL or a local file.
+                                source={{uri: videoTracks[currentVideoId]?.url}}   // Can be a URL or a local file.
                                 ref={videoPlayer}
                                 onBuffer={onBuffer}                // Callback when remote video is buffering
                                 onError={videoError}               // Callback when video cannot be loaded
@@ -454,11 +461,12 @@ function VideoDialog(props) {
                             {
                                 videoTracks.length > 0 &&
                                 <View>
-                                    <Text numberOfLines={readmore ? null : 2}  ellipsizeMode={readmore ? null : "tail"}>
+                                    <Text numberOfLines={readmore ? null : 2} ellipsizeMode={readmore ? null : 'tail'}>
                                         {videoTracks[currentVideoId].description || ''}
                                     </Text>
                                     <TouchableOpacity onPress={() => setReadmore(!readmore)}>
-                                        <Text style={{color: globalStyle?.primary_color_2}}>{readmore ? 'Less ...' : 'Read more ...'}</Text>
+                                        <Text
+                                            style={{color: globalStyle?.primary_color_2}}>{readmore ? 'Less ...' : 'Read more ...'}</Text>
                                     </TouchableOpacity>
                                 </View>
                                 /*<Text
@@ -654,7 +662,7 @@ const useStyles = (globalStyle) => {
             display: 'flex',
             flexDirection: 'row',
         },
-    })
+    });
 };
 
 const mapStateToProps = state => ({

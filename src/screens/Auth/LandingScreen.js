@@ -7,6 +7,7 @@ import Spinner from "react-native-spinkit";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {getAppSettings, useAppSettingsDispatch, useAppSettingsState} from "../../context/AppSettingsContext";
 import {
+    ENV_APP_NAME,
     ENV_APP_PREFIX,
     ENV_MULTI_TENANCY,
 } from '@env';
@@ -49,7 +50,7 @@ export function LandingScreen(props) {
                 style={styles.welcomeImage}
             />
 
-            <Text style={styles.title}>Crowe MacKay App Solution</Text>
+            <Text style={styles.title}>{ENV_APP_NAME}</Text>
             <View style={styles.formContainer}>
                 <CheckBox
                     center

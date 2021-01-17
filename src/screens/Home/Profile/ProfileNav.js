@@ -14,37 +14,44 @@ import {useAppSettingsState} from "../../../context/AppSettingsContext";
 
 const Stack = createStackNavigator();
 
-function ProfileNav() {
+function ProfileNav(props) {
     const {config} = useAppSettingsState();
+    const auth_strategy = config.app_settings?.auth_strategy === 'NONE';
     const styles = useStyles(config.style);
     const globalStyle = {...config.style};
 
     const {signOut} = useContext(AuthContext);
 
     const onSignOut = async () => {
-        try {
-            let id_token = await AsyncStorage.getItem('id_token');
-            let user_id = (jwtDecode(id_token)).user_id;
-            // unsubscribe('debug-' + user_id);
-            unsubscribeAll(user_id);
-            /*await AsyncStorage.multiRemove([
-                'access_token',
-                'refresh_token',
-                'id_token',
-            ]);*/
-            await AsyncStorage.clear();
-            pusher.allChannels().forEach(channel => {
-                channel.unbind_all();
-                pusher.unsubscribe(channel);
-                console.log(channel.name)
-            });
-            signOut();
-            Toast.showWithGravity('Logout Successfully!', Toast.LONG, Toast.BOTTOM, [
-                'RCTModalHostViewController',
-            ]);
-        } catch (err) {
-            console.log(err);
-        }
+
+            try {
+                let id_token = await AsyncStorage.getItem('id_token');
+                let user_id = auth_strategy ? "" : (jwtDecode(id_token)).user_id;
+                // unsubscribe('debug-' + user_id);
+                unsubscribeAll(user_id);
+                /*await AsyncStorage.multiRemove([
+                    'access_token',
+                    'refresh_token',
+                    'id_token',
+                ]);*/
+                await AsyncStorage.clear();
+                pusher.allChannels().forEach(channel => {
+                    channel.unbind_all();
+                    pusher.unsubscribe(channel);
+                    console.log(channel.name)
+                });
+                /*if (auth_strategy) {
+                    props.navigation.navigate('Auth')
+                } else {
+                    signOut();
+                }*/
+                signOut();
+                Toast.showWithGravity('Logout Successfully!', Toast.LONG, Toast.BOTTOM, [
+                    'RCTModalHostViewController',
+                ]);
+            } catch (err) {
+                console.log(err);
+            }
     };
 
     return (

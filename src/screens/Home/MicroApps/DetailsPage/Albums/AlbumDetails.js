@@ -9,11 +9,12 @@ import {useDispatch, useSelector} from 'react-redux';
 import LoadingSpinner from '../../../../../components/LoadingSpinner';
 import {Button, Icon, Image, ListItem} from 'react-native-elements';
 import noImage from '../../../../../assets/images/no-image.jpg';
-// import {globalStyle} from '../../../../../assets/style';
 import {FAB} from 'react-native-paper';
 import {makeImageUri, timeToSeconds} from '../../../../../services/common';
 import PlaylistItem from '../../components/PlaylistItem';
-import {useAppSettingsState} from "../../../../../context/AppSettingsContext";
+import {useAppSettingsState} from '../../../../../context/AppSettingsContext';
+import TrackPlayer from 'react-native-track-player';
+// import {globalStyle} from '../../../../../assets/style';
 
 function AlbumDetails(props) {
     const {config} = useAppSettingsState();
@@ -54,21 +55,30 @@ function AlbumDetails(props) {
 
     // play from item
     const playFrom = async (item) => {
-        if(!network.isConnected && mylibrary[item.playlist._id] === undefined){
-            Alert.alert("Sorry, you can't this song offline mode!");
+        if (!network.isConnected && mylibrary[item.playlist._id] === undefined) {
+            Alert.alert('Please download the media with internet if you want to access this track offline.');
             return;
         }
+        const currentTrack = await TrackPlayer.getCurrentTrack();
+        console.log('currentTrack ===> ', currentTrack)
+        if (currentTrack !== null) {
+            await TrackPlayer.stop();
+            await TrackPlayer.reset();
+            // await TrackPlayer.destroy();
+        }
+
+        let dState = currentTrack ? 1 : 0;
         dispatch(Actions.setStartSongAction({id: item.playlist._id, position: 0}));
-        dispatch(Actions.setPlayModeAction("ITEM"));
-        await startPlay();
+        dispatch(Actions.setPlayModeAction('ITEM'));
+        await startPlay(dState);
     };
 
     // play list
     const onPlay = async () => {
-        dispatch(Actions.setPlayModeAction("LIST"));
-        if(dialogState.format === "MP3"){
+        dispatch(Actions.setPlayModeAction('LIST'));
+        if (dialogState.format === 'MP3') {
             await startPlay();
-        }else {
+        } else {
             await startVideoPlay();
         }
     };
@@ -79,7 +89,7 @@ function AlbumDetails(props) {
         dispatch(Actions.setDialogStateAction(0));
     };
 
-    const startPlay = async () => {
+    const startPlay = async (dState = 0) => {
         /*let formattedList = [];
         let curLib = JSON.parse(await AsyncStorage.getItem('mylibrary'));
 
@@ -112,7 +122,8 @@ function AlbumDetails(props) {
         dispatch(Actions.setFormattedListAction(formattedList));*/
 
         await formatList();
-        dispatch(Actions.setDialogStateAction(0));
+        dispatch(Actions.setDialogStateAction(dState));
+        // dispatch(Actions.setDialogStateAction(0));
     };
 
     const formatList = async () => {
@@ -132,7 +143,7 @@ function AlbumDetails(props) {
                     description: item.playlist.data.description,
                     artwork: flag ? makeImageUri(curLib[item.playlist._id].artwork) : item.playlist.data.picture,
                     duration: timeToSeconds(item.playlist.data.duration_string),
-                    web_links: Boolean(item.playlist?.data?.web_links) ? [...item.playlist?.data?.web_links] : []
+                    web_links: Boolean(item.playlist?.data?.web_links) ? [...item.playlist?.data?.web_links] : [],
                 };
             } else {
                 tmp = {
@@ -143,7 +154,7 @@ function AlbumDetails(props) {
                     description: item.playlist.data.description,
                     artwork: item.playlist.data.picture,
                     duration: timeToSeconds(item.playlist.data.duration_string),
-                    web_links: Boolean(item.playlist?.data?.web_links) ? [...item.playlist?.data?.web_links] : []
+                    web_links: Boolean(item.playlist?.data?.web_links) ? [...item.playlist?.data?.web_links] : [],
                 };
             }
             // console.log('tmp ====> ', tmp, item, item.playlist.data.duration_string, timeToSeconds(item.playlist.data.duration_string))
@@ -209,7 +220,12 @@ function AlbumDetails(props) {
     };
 
     if (playlistData.loading || loadingLib || !album) {
-        return <LoadingSpinner/>;
+        return <LoadingSpinner
+            title={playlistData.loading ? 'Loading songs ...'
+                : loadingLib ?
+                    'Loading Library ...'
+                    : album && 'Empty album ...'}
+        />;
     } else if (playlistData.data.length === 0) {
         return (
             <View style={styles.nodataView}>
@@ -224,12 +240,23 @@ function AlbumDetails(props) {
                 showsVerticalScrollIndicator={false}
                 showsHorizontalScrollIndicator={false}
             >
-                <Image
-                    source={album.data === undefined || album.data.picture === ''
-                        ? noImage
-                        : {uri: album.data.picture}}
-                    style={styles.imageContainer}
-                />
+                <View>
+                    <Image
+                        source={album.data === undefined || album.data.picture === ''
+                            ? noImage
+                            : {uri: album.data.picture}}
+                        style={styles.imageContainer}
+                    />
+                    <FAB
+                        style={{...styles.fab, backgroundColor: globalStyle?.primary_color_2}}
+                        color={'white'}
+                        small={false}
+                        animated
+                        icon={'play'}
+                        onPress={() => onPlay()}
+                    />
+                </View>
+
                 <View style={styles.titleContainer}>
                     <Text style={styles.title}>{album.data.title || ''}</Text>
                 </View>
@@ -262,14 +289,14 @@ function AlbumDetails(props) {
                 keyExtractor={item => item.playlist._id}
             />*/}
             </ScrollView>
-            <FAB
+            {/*<FAB
                 style={{...styles.fab, backgroundColor: globalStyle?.primary_color_2}}
                 color={'white'}
                 small={false}
                 animated
                 icon={'play'}
                 onPress={() => onPlay()}
-            />
+            />*/}
         </SafeAreaView>
     );
 }
@@ -325,9 +352,10 @@ const useStyles = (globalStyle) => {
         fab: {
             position: 'absolute',
             right: 10,
-            top: 260,
+            // top: 260,
+            bottom: -25,
         },
-    })
+    });
 };
 
 export default AlbumDetails;

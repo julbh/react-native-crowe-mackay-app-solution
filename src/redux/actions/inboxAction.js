@@ -2,10 +2,10 @@ import {GET_INBOX_ERR, GET_INBOX_REQ, GET_INBOX_SUC, SET_INBOX_DATA} from '../co
 import {getInboxService} from '../../services/inbox';
 import _ from 'lodash';
 
-export const getInboxAction = () => {
+export const getInboxAction = (user_id) => {
     return (dispatch, getState) => {
         dispatch({type: GET_INBOX_REQ});
-        getInboxService().then((res) => {
+        getInboxService(user_id).then((res) => {
             let sortedInbox = _.orderBy(res,  ['createdAt'], ['desc']);
             dispatch({type: GET_INBOX_SUC, data: sortedInbox});
         }).catch(error => {

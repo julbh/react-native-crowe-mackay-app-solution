@@ -13,7 +13,6 @@ import * as Actions from '../redux/actions';
 import InboxNav from '../screens/Home/Inbox/InboxNav';
 import {init} from '../services/notification';
 import URI from 'urijs';
-// import {globalStyle} from '../assets/style';
 import {useAppSettingsState} from "../context/AppSettingsContext";
 import ProgramNav from "../screens/Home/MicroApps/DetailsPage/Program/ProgramNav";
 import NavigationHeader from "../components/NavigationHeader";
@@ -44,15 +43,20 @@ const HomeNavigator = (props) => {
         ...config.style
     };
 
+    const auth_strategy = config.app_settings?.auth_strategy === 'NONE';
+
     const dispatch = useDispatch();
+    let userData = useSelector((rootReducer) => rootReducer.userData);
     const dialogState = useSelector(({dialogState}) => dialogState);
 
     useEffect(() => {
         let user_id = '';
         AsyncStorage.getItem('id_token')
             .then((response) => {
-                user_id = (jwtDecode(response)).user_id;
-                init(user_id, dispatch);
+                if(response){
+                    user_id = auth_strategy ? "" : (jwtDecode(response)).user_id;
+                    init(user_id, dispatch);
+                }
             })
             .catch(err => {
                 console.log(err);
@@ -77,7 +81,8 @@ const HomeNavigator = (props) => {
     }, []);
 
     useEffect(() => {
-        props.getInbox();
+        let {user_id} = auth_strategy ? {user_id: ""} : (jwtDecode(userData.id_token));
+        props.getInbox(user_id);
     }, []);
 
     const handleOpenURL = (event) => {
@@ -288,7 +293,7 @@ const HomeNavigator = (props) => {
                                   style={{opacity: focused ? 1 : 0.5}}
                                   name="email-outline" color={color}
                                   size={focused ? 33 : 25}/>
-                            {props.inboxData.data.length > 0 && props.inboxData.data.filter(inbox => inbox.data.status === 'UNREAD').length > 0 &&
+                            {props.inboxData.data.length > 0 && props.inboxData.data.filter(inbox => inbox.status === 'UNREAD').length > 0 &&
                             <Badge
                                 status="error"
                                 value={props.inboxData.data.filter(inbox => inbox.data.status === 'UNREAD').length}
@@ -299,7 +304,7 @@ const HomeNavigator = (props) => {
                     tabBarColor: globalStyle.gray_tone_3,
                 }}
             />}
-            <Tab.Screen
+            {!auth_strategy && <Tab.Screen
                 name="ProfileNav"
                 component={ProfileNav}
                 options={{
@@ -318,7 +323,7 @@ const HomeNavigator = (props) => {
                     },
                     tabBarColor: globalStyle.gray_tone_3,
                 }}
-            />
+            />}
         </Tab.Navigator>
     );
 };

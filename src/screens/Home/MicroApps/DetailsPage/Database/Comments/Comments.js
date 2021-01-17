@@ -18,6 +18,7 @@ import {useAppSettingsState} from "../../../../../../context/AppSettingsContext"
 
 function Comments({navigation, route}) {
     const {config} = useAppSettingsState();
+    const auth_strategy = config.app_settings?.auth_strategy === 'NONE';
     const styles = useStyles(config.style);
     const globalStyle = {...config.style};
 
@@ -42,7 +43,7 @@ function Comments({navigation, route}) {
             let comment_data = route?.params?.comment;
             setReferenceId(comment_data.reference_id);
             let id_token = userData.id_token;
-            let {user_id} = (jwtDecode(id_token));
+            let {user_id} = auth_strategy ? {} : (jwtDecode(id_token));
             setCommenterId(user_id);
             getAnythingService(comment_data.reference_id).then(res => {
                 console.log('res ==> ', res);
@@ -72,7 +73,7 @@ function Comments({navigation, route}) {
             if (route?.params?.reference_id) {
                 setReferenceId(route?.params?.reference_id);
                 let id_token = userData.id_token;
-                let {user_id} = (jwtDecode(id_token));
+                let {user_id} =  auth_strategy ? {} : (jwtDecode(id_token));
                 setCommenterId(user_id);
                 let data = {
                     reference_id: route?.params?.reference_id,

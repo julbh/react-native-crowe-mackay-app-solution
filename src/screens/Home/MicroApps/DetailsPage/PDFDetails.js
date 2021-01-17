@@ -1,11 +1,12 @@
 import React, {useContext, useEffect, useState} from 'react';
-import {Text, View, StyleSheet, ActivityIndicator} from 'react-native';
+import {Text, View, StyleSheet, ActivityIndicator, Dimensions} from 'react-native';
 import {WebView} from 'react-native-webview';
 import {useSelector} from 'react-redux';
 import jwtDecode from 'jwt-decode';
 import URI from 'urijs';
 import LoadingSpinner from '../../../../components/LoadingSpinner';
 import {useAppSettingsState} from "../../../../context/AppSettingsContext";
+import Pdf from 'react-native-pdf';
 
 function LoadingIndicatorView() {
     return (
@@ -13,7 +14,7 @@ function LoadingIndicatorView() {
     );
 }
 
-function WebDetails(props) {
+function PDFDetails(props) {
     const {config} = useAppSettingsState();
     const auth_strategy = config.app_settings?.auth_strategy === 'NONE';
     const styles = useStyles(config.style);
@@ -48,15 +49,36 @@ function WebDetails(props) {
         setDetails(params);
     }, []);
 
+    console.log('pdf url ============> ', url)
+
+    if(loading) return <LoadingSpinner/>
+
     if (url !== '' && url !== undefined) {
         return (
             <View style={styles.container}>
-                <WebView
+                <Pdf
+                    source={{uri: url}}
+                    onLoadComplete={(numberOfPages,filePath)=>{
+                        setLoading(false);
+                        console.log(`number of pages: ${numberOfPages}`);
+                    }}
+                    onPageChanged={(page,numberOfPages)=>{
+                        console.log(`current page: ${page}`);
+                    }}
+                    onError={(error)=>{
+                        setLoading(false);
+                        console.log(error);
+                    }}
+                    onPressLink={(uri)=>{
+                        console.log(`Link presse: ${uri}`)
+                    }}
+                    style={styles.pdf}/>
+                {/*<WebView
                     source={{uri: url}}
                     // domStorageEnabled={true}
                     renderLoading={LoadingIndicatorView}
                     startInLoadingState={true}
-                />
+                />*/}
             </View>
         );
     } else {
@@ -92,7 +114,12 @@ const useStyles = (globalStyle) => {
             justifyContent: 'center',
             alignItems: 'center',
         },
+        pdf: {
+            flex:1,
+            width:Dimensions.get('window').width,
+            height:Dimensions.get('window').height,
+        }
     })
 };
 
-export default WebDetails;
+export default PDFDetails;
