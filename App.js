@@ -56,6 +56,7 @@ import {
 import {
     ENV_APP_PREFIX,
     ENV_MULTI_TENANCY,
+    ENV_AUTH_STRATEGY,
 } from '@env';
 
 // import {getCategories} from './src/services/microApps/wcService';
@@ -104,11 +105,10 @@ export default App = () => {
 const Main = () => {
     const flag = ENV_MULTI_TENANCY === "1";
     const appSettingDispatch = useAppSettingsDispatch();
+    const {config} = useAppSettingsState();
     const dispatch = useDispatch();
     const state = useSelector(({userData}) => userData);
     const dialogState = useSelector(({dialogState}) => dialogState);
-    const {config} = useAppSettingsState();
-    const auth_strategy = config.app_settings?.auth_strategy === 'NONE';
 
     React.useEffect(() => {
         let channel = pusher.subscribe(SUBSCRIBE_TO_CHANNEL);
@@ -117,7 +117,7 @@ const Main = () => {
         });*/
         tokenVerify().then(async (res) => {
             try {
-                let app_prefix = await AsyncStorage.getItem('app_prefix');
+                let app_prefix = await AsyncStorage.getItem('app_prefix') || '';
                 if (flag) {
                     let response = await getAppSettings(appSettingDispatch, app_prefix);
                 }else {
@@ -160,6 +160,8 @@ const Main = () => {
         return <SplashScreen/>;
     }
 
+    console.log('dialogState => ', dialogState)
+
     return (
         <>
             <View style={{height: Platform.OS === 'ios' ? 35 : 0, backgroundColor: globalStyle.common_header_color}}>
@@ -169,7 +171,7 @@ const Main = () => {
 
                 <NavigationContainer>
                     <Stack.Navigator headerMode={'none'}>
-                        {!auth_strategy && state.access_token === null ? (
+                        {config.app_settings?.auth_strategy !== 'NONE' && state.access_token === null ? (
                             <Stack.Screen name="Auth" component={AuthNavigator}/>
                         ) : (
                             <>
